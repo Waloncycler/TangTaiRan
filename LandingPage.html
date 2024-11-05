@@ -1,0 +1,1182 @@
+<html><head><base href="https://www.TTR.Malaysia.com">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A | Malaysia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #00a86b;
+            --secondary-color: #1e90ff;
+            --background-color: #fff;
+            --text-color: #333;
+            --light-text-color: #fff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 60px;
+        }
+
+        header {
+            background-color: var(--background-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--light-text-color);
+            overflow: hidden;
+            padding-bottom: 50px;
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(0, 168, 107, 0.3), rgba(0, 0, 0, 0.5));
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            padding: 120px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .hero p:first-of-type {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--light-text-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+        }
+
+        .hero p {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            font-weight: 500;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            transition: background-color 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            padding: 30px;
+            text-align: center;
+            z-index: 1500;
+            width: 100%;
+        }
+
+        .stat-item {
+            padding: 30px 20px;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1500;
+        }
+
+        @media (max-width: 768px) {
+            .stat-table-popup {
+                left: 0;
+                transform: none;
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                bottom: 30px;
+                padding: 15px;
+                gap: 15px;
+            }
+
+            .stat-item {
+                padding: 15px 10px;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-number {
+            font-size: 3.2rem;
+            font-weight: 600;
+            color: var(--light-text-color);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--light-text-color);
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .product-showcase {
+            padding: 100px 0;
+            background: linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)),
+                        url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3') center/cover fixed;
+            position: relative;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .product-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 60px;
+        }
+
+        .product-info {
+            flex: 1;
+            max-width: 300px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-info h4 {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .product-info ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .product-info li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .product-info li:before {
+            content: '✓';
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .product-item {
+            flex: 0 0 auto;
+            max-width: 400px;
+        }
+
+        .product-item.placeholder {
+            opacity: 0.5;
+            background: linear-gradient(45deg, rgba(0,0,0,0.05) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.05) 75%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-item.placeholder::after {
+            content: "Coming Soon";
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .product-item {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .product-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .product-item img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .product-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .product-item p {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 60px;
+            position: relative;
+            padding-bottom: 20px;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        footer {
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            padding: 30px 0;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+            max-width: 100%;
+            padding: 0 30px;
+        }
+
+        .footer-section {
+            padding: 20px 0;
+            max-width: 100%;
+        }
+
+        .footer-section:first-child {
+            padding-right: 40px;
+        }
+
+        .footer-section:last-child {
+            padding-left: 40px;
+        }
+
+        .about-info {
+            max-width: 400px;
+            margin-bottom: 20px;
+            margin-right: auto;
+        }
+
+        .about-info p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .footer-section h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .footer-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--light-text-color);
+            border-radius: 1.5px;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: flex-start;
+            margin-left: auto;
+        }
+
+        .contact-details {
+            flex: 1;
+            padding-right: 40px;
+        }
+
+        .contact-details p {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .contact-details i {
+            width: 20px;
+            margin-top: 4px;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 30px;
+            justify-content: flex-end;
+            margin-top: 15px;
+            padding: 15px 0;
+        }
+
+        .social-icons a {
+            color: var(--light-text-color);
+            font-size: 2rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .qr-popup {
+            margin-top: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: block;
+        }
+
+        .qr-popup svg {
+            width: 120px;
+            height: 120px;
+            display: block;
+        }
+
+        .social-icons a:hover {
+            opacity: 0.8;
+            transform: translateY(-3px);
+        }
+
+        .location-trigger {
+            position: relative;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+
+        .location-trigger:hover {
+            color: inherit;
+        }
+
+        .map-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            margin-bottom: 10px;
+        }
+
+        .map-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        .location-trigger:hover .map-popup {
+            display: block;
+        }
+
+        @media (max-width: 1200px) {
+            .product-showcase .product-grid {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .product-info {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            
+            .product-grid {
+                padding: 0 20px;
+                gap: 30px;
+            }
+            
+            .footer-content {
+                padding: 0 20px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr; 
+            }
+            
+            .footer-section:first-child,
+            .footer-section:last-child {
+                padding: 30px 0;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+            }
+            
+            .social-icons {
+                justify-content: flex-start;
+                margin-top: 20px;
+                gap: 20px;
+            }
+
+            .social-icons a {
+                font-size: 1.5rem;
+            }
+
+            .qr-popup {
+                left: 0;
+                transform: none;
+            }
+        }
+
+        .customer-stories {
+            padding: 100px 0;
+            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+                        url('https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3') center/cover fixed;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stories-grid {
+            position: relative;
+            overflow: hidden;
+            padding: 20px 60px;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 40px;
+            max-width: 100%;
+        }
+
+        .story-item {
+            transition: transform 0.5s ease;
+            flex: 0 0 calc(33.333% - 40px);
+            margin: 0 20px;
+            display: none;
+        }
+
+        .story-item.active {
+            display: block;
+        }
+
+        .carousel-controls {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .carousel-control {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .carousel-control:hover {
+            background: var(--secondary-color);
+        }
+
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .carousel-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .carousel-indicator.active {
+            background: var(--primary-color);
+        }
+
+        .story-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .story-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .story-image {
+            margin-bottom: 20px;
+        }
+
+        .story-image i {
+            font-size: 4rem;
+            color: var(--primary-color);
+        }
+
+        .story-item h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .story-role {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .story-text {
+            color: #333;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .story-rating {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stories-grid {
+                padding: 0 20px;
+            }
+            
+            .story-item {
+                flex: 0 0 100%;
+                margin: 0;
+            }
+            
+            .carousel-controls {
+                padding: 0 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stories-grid {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">TTR 唐肽燃</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#customer-stories">Customer Stories</a></li>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <video autoplay muted loop playsinline poster="https://assets.mixkit.co/videos/4831/4831-thumb-720-0.jpg" class="hero-video">
+            <source src="https://assets.mixkit.co/videos/4831/4831-720.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <div class="hero-content">
+            <h1>A</h1>
+            <p>Trust, Transform, Restore</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">85%</div>
+                <div class="stat-label">Health Improvement Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">98%</div>
+                <div class="stat-label">Satisfaction Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">1M+</div>
+                <div class="stat-label">Products Sold</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="products" class="product-showcase">
+        <div class="container">
+            <h2 class="section-title">Our Products</h2>
+            <div class="product-grid">
+                <div class="product-info">
+                    <h4>Main Functions</h4>
+                    <ul>
+                        <li>Enhances cellular regeneration</li>
+                        <li>Supports immune system function</li>
+                        <li>Promotes healthy metabolism</li>
+                        <li>Improves nutrient absorption</li>
+                        <li>Supports natural detoxification</li>
+                    </ul>
+                </div>
+                
+                <div class="product-item">
+                    <img src="/a/5e0bb564-3173-4b6a-99b9-b750f4b72eb2" alt="Peptide Product" width="200" height="300">
+                    <h3>Peptide Powder - Classic Formula</h3>
+                    <p>Our classic formula, perfect for daily health maintenance.</p>
+                    <a href="https://ttr.malaysia.com/products/classic-formula" class="cta-button">Learn More</a>
+                </div>
+                
+                <div class="product-info">
+                    <h4>Key Advantages</h4>
+                    <ul>
+                        <li>Scientifically proven formula</li>
+                        <li>100% natural ingredients</li>
+                        <li>No artificial additives</li>
+                        <li>Easy to absorb</li>
+                        <li>Suitable for daily use</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="customer-stories" class="customer-stories">
+        <div class="container">
+            <h2 class="section-title">Customer Stories</h2>
+            <div class="stories-grid">
+                <div class="story-item">
+                    <div class="story-image">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3>Sarah Chen</h3>
+                    <div class="story-role">Health Enthusiast</div>
+                    <p class="story-text">
+                        "TTR Peptides has transformed my daily wellness routine. After 3 months, I've noticed remarkable improvements in my energy levels and overall health."
+                    </p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="story-item">
+                    <div class="story-image">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3>David Wong</h3>
+                    <div class="story-role">Fitness Trainer</div>
+                    <p class="story-text">
+                        "As a fitness professional, I'm very selective about supplements. TTR Peptides stands out for its quality and effectiveness."
+                    </p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="story-item">
+                    <div class="story-image">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3>Lisa Tan</h3>
+                    <div class="story-role">Wellness Coach</div>
+                    <p class="story-text">
+                        "I've recommended TTR Peptides to many of my clients. The results have been consistently impressive across different health goals."
+                    </p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="story-item">
+                    <div class="story-image"><i class="fas fa-user-circle"></i></div>
+                    <h3>Michael Lim</h3>
+                    <div class="story-role">Business Executive</div>
+                    <p class="story-text">"TTR Peptides has helped me maintain my energy levels during long work days. A true game-changer!"</p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="story-item">
+                    <div class="story-image"><i class="fas fa-user-circle"></i></div>
+                    <h3>Amanda Ng</h3>
+                    <div class="story-role">Professional Athlete</div>
+                    <p class="story-text">"The recovery benefits I've experienced with TTR Peptides are remarkable. Essential for my training routine."</p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="story-item">
+                    <div class="story-image"><i class="fas fa-user-circle"></i></div>
+                    <h3>Dr. James Teo</h3>
+                    <div class="story-role">Healthcare Professional</div>
+                    <p class="story-text">"I recommend TTR Peptides to my patients. The scientific backing and results speak for themselves."</p>
+                    <div class="story-rating">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-controls">
+                <button class="carousel-control prev-button"><i class="fas fa-chevron-left"></i></button>
+                <button class="carousel-control next-button"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="carousel-indicators"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <div class="about-info">
+                    <p>TTR Peptides is Malaysia's leading provider of innovative health solutions. With over a decade of experience, we're committed to enhancing lives through advanced peptide technology.</p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Us</h3>
+                <div class="contact-info">
+                    <div class="contact-details">
+                        <p><i class="fas fa-phone"></i> +60 12-345 6789</p>
+                        <p><i class="fas fa-envelope"></i> info@ttr.malaysia.com</p>
+                        <p>
+                            <a href="https://goo.gl/maps/KLCC" target="_blank" class="location-trigger">
+                                <i class="fas fa-map-marker-alt"></i> Level 36, Menara 2 Petronas, Kuala Lumpur City Centre
+                                <div class="map-popup">
+                                    <iframe 
+                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3983.7686557209882!2d101.71395831475882!3d3.158282977415386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc37d0d4779495%3A0x815d41677c991e!2sPetronas%20Twin%20Tower%202!5e0!3m2!1sen!2s!4v1623456789012!5m2!1sen!2s" 
+                                        width="400" 
+                                        height="300" 
+                                        style="border:0;" 
+                                        allowfullscreen="" 
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            </a>
+                        </p>
+                        <p>
+                            <a href="https://goo.gl/maps/BangsarSouth" target="_blank" class="location-trigger">
+                                <i class="fas fa-map-marker-alt"></i> Lot 13A, The Vertical Office Suites, Avenue 3, Bangsar South
+                                <div class="map-popup">
+                                    <iframe 
+                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3983.7686557209882!2d101.71395831475882!3d3.158282977415386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc37d0d4779495%3A0x815d41677c991e!2sPetronas%20Twin%20Tower%202!5e0!3m2!1sen!2s!4v1623456789012!5m2!1sen!2s" 
+                                        width="400" 
+                                        height="300" 
+                                        style="border:0;" 
+                                        allowfullscreen="" 
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            </a>
+                        </p>
+                    </div>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/TTRMalaysia" target="_blank" title="Facebook">
+                            <i class="fab fa-facebook"></i>
+                            <div class="qr-popup">
+                                <svg viewBox="0 0 100 100">
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
+                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                </svg>
+                            </div>
+                        </a>
+                        <a href="https://wa.me/60123456789" target="_blank" title="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                            <div class="qr-popup">
+                                <svg viewBox="0 0 100 100">
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
+                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                </svg>
+                            </div>
+                        </a>
+                        <a href="https://wechat.com" target="_blank" title="WeChat">
+                            <i class="fab fa-weixin"></i>
+                            <div class="qr-popup">
+                                <svg viewBox="0 0 100 100">
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
+                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollTrigger.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            gsap.registerPlugin(ScrollTrigger);
+
+            const heroContent = document.querySelector('.hero-content');
+            if (heroContent) {
+                gsap.from('.hero-content', {
+                    opacity: 0,
+                    y: 50,
+                    duration: 1,
+                    ease: 'power3.out'
+                });
+            }
+
+            const productItems = document.querySelectorAll('.product-item');
+            if (productItems.length) {
+                gsap.from('.product-item', {
+                    scrollTrigger: {
+                        trigger: '.product-showcase',
+                        start: 'top 80%'
+                    },
+                    opacity: 0,
+                    y: 50,
+                    stagger: 0.3,
+                    duration: 1,
+                    ease: 'power3.out'
+                });
+            }
+
+            const statElements = document.querySelectorAll('.stat-number');
+            if (statElements.length) {
+                statElements.forEach(stat => {
+                    const finalValue = stat.textContent;
+                    gsap.from(stat, {
+                        scrollTrigger: {
+                            trigger: '.stats-grid',
+                            start: 'top 80%'
+                        },
+                        textContent: "0",
+                        duration: 2,
+                        ease: "power1.out",
+                        snap: { textContent: 1 },
+                        onUpdate: function() {
+                            if (finalValue.includes('%')) {
+                                const value = Math.round(this.progress() * parseFloat(finalValue));
+                                stat.textContent = `${value}%`;
+                            } else if (finalValue.includes('K')) {
+                                const value = Math.round(this.progress() * 50);
+                                stat.textContent = `${value}K+`;
+                            } else if (finalValue.includes('M')) {
+                                const value = Math.round(this.progress() * 1);
+                                stat.textContent = `${value}M+`;
+                            }
+                        }
+                    });
+                });
+            }
+
+            const locationTriggers = document.querySelectorAll('.location-trigger');
+            locationTriggers.forEach(trigger => {
+                const mapPopup = trigger.querySelector('.map-popup');
+                if (mapPopup) {
+                    trigger.addEventListener('mouseenter', () => {
+                        mapPopup.style.display = 'block';
+                    });
+                    
+                    trigger.addEventListener('mouseleave', () => {
+                        mapPopup.style.display = 'none';
+                    });
+                    
+                    mapPopup.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                }
+            });
+
+            const socialIcons = document.querySelectorAll('.social-icons a');
+            socialIcons.forEach(icon => {
+                icon.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = icon.getAttribute('href');
+                    window.open(url, '_blank');
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                const mapPopups = document.querySelectorAll('.map-popup');
+                if (!e.target.closest('.location-trigger')) {
+                    mapPopups.forEach(popup => {
+                        if (popup) {
+                            popup.style.display = 'none';
+                        }
+                    });
+                }
+            });
+
+            const storyItems = document.querySelectorAll('.story-item');
+            const prevButton = document.querySelector('.prev-button');
+            const nextButton = document.querySelector('.next-button');
+            const carouselIndicators = document.querySelector('.carousel-indicators');
+            
+            const itemsPerView = window.innerWidth <= 768 ? 1 : 3;
+            let currentIndex = 0;
+
+            for(let i = 0; i < Math.ceil(storyItems.length / itemsPerView); i++) {
+                const indicator = document.createElement('div');
+                indicator.classList.add('carousel-indicator');
+                if(i === 0) indicator.classList.add('active');
+                indicator.addEventListener('click', () => {
+                    currentIndex = i * itemsPerView;
+                    showStories(currentIndex);
+                });
+                carouselIndicators.appendChild(indicator);
+            }
+
+            function updateIndicators() {
+                const indicators = document.querySelectorAll('.carousel-indicator');
+                indicators.forEach((indicator, index) => {
+                    indicator.classList.toggle('active', 
+                        index === Math.floor(currentIndex / itemsPerView));
+                });
+            }
+
+            function showStories(index) {
+                storyItems.forEach(item => item.classList.remove('active'));
+                for(let i = 0; i < itemsPerView; i++) {
+                    const itemIndex = (index + i) % storyItems.length;
+                    storyItems[itemIndex].classList.add('active');
+                }
+                updateIndicators();
+            }
+
+            function nextStories() {
+                currentIndex = (currentIndex + itemsPerView) % storyItems.length;
+                showStories(currentIndex);
+            }
+
+            function previousStories() {
+                currentIndex = (currentIndex - itemsPerView + storyItems.length) % storyItems.length;
+                showStories(currentIndex);
+            }
+
+            prevButton.addEventListener('click', previousStories);
+            nextButton.addEventListener('click', nextStories);
+
+            let carouselInterval = setInterval(nextStories, 5000);
+
+            showStories(currentIndex);
+
+            window.addEventListener('resize', () => {
+                const newItemsPerView = window.innerWidth <= 768 ? 1 : 3;
+                if (newItemsPerView !== itemsPerView) {
+                    itemsPerView = newItemsPerView;
+                    showStories(currentIndex);
+                }
+            });
+
+            const storiesContainer = document.querySelector('.stories-grid');
+            storiesContainer.addEventListener('mouseenter', () => {
+                clearInterval(carouselInterval);
+            });
+
+            storiesContainer.addEventListener('mouseleave', () => {
+                carouselInterval = setInterval(nextStories, 5000);
+            });
+
+            gsap.from('.story-item', {
+                scrollTrigger: {
+                    trigger: '.customer-stories',
+                    start: 'top 80%'
+                },
+                opacity: 0,
+                y: 50,
+                stagger: 0.3,
+                duration: 1,
+                ease: 'power3.out'
+            });
+        });
+    </script>
+</body>
+</html>
