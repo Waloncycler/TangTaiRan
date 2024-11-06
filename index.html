@@ -194,30 +194,104 @@
             z-index: 1500;
         }
 
-        @media (max-width: 768px) {
-            .stat-table-popup {
+        @media (max-width: 1024px) { 
+            .container {
+                padding: 0 30px;
+            }
+            
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .hero p {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) { 
+            .container {
+                padding: 0 20px;
+            }
+
+            .nav-links {
+                display: none; 
+                position: fixed;
+                top: 80px;
                 left: 0;
-                transform: none;
-                width: 100%;
+                right: 0;
+                background: var(--primary-color);
+                flex-direction: column;
+                padding: 20px 0;
+                text-align: center;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links li {
+                margin: 10px 0;
+            }
+
+            .menu-toggle {
+                display: block;
+                font-size: 1.5rem;
+                color: white;
+                cursor: pointer;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 2rem;
             }
 
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
-                bottom: 30px;
-                padding: 15px;
                 gap: 15px;
+                padding: 15px;
             }
 
-            .stat-item {
-                padding: 15px 10px;
+            .product-showcase {
+                padding: 100px 0;
             }
 
-            .stat-number {
-                font-size: 2.5rem;
+            .product-grid {
+                flex-direction: column;
+                gap: 30px;
             }
 
-            .stat-label {
-                font-size: 0.9rem;
+            .product-item {
+                width: 100%;
+            }
+
+            .customer-stories {
+                padding: 100px 0;
+            }
+
+            .stories-grid {
+                padding: 0 20px;
+            }
+
+            .story-item {
+                flex: 0 0 100%;
+                margin: 0;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .product-grid {
+                gap: 20px;
+            }
+
+            .stories-grid {
+                padding: 0 40px;
+            }
+
+            .story-item {
+                flex: 0 0 calc(50% - 20px);
             }
         }
 
@@ -752,6 +826,7 @@
     <header>
         <nav class="container">
             <div class="logo">TTR® 唐肽燃®</div>
+            <div class="menu-toggle"><i class="fas fa-bars"></i></div>
             <ul class="nav-links">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#products">Products</a></li>
@@ -1180,6 +1255,28 @@
                 stagger: 0.3,
                 duration: 1,
                 ease: 'power3.out'
+            });
+            
+            const navLinks = document.querySelector('.nav-links');
+            const menuToggle = document.querySelector('.menu-toggle');
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+                menuToggle.innerHTML = navLinks.classList.contains('active') ? 
+                    '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!navLinks.contains(e.target) && navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+            });
+
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('active');
+                    menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                });
             });
         });
     </script>
