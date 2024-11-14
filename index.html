@@ -1,4 +1,7 @@
-<html><head><base href="https://www.tangtairan.shop/">
+<html>
+
+<head>
+    <base href="https://www.tangtairan.shop/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>唐肽燃 | Malaysia</title>
@@ -6,8 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <style>
         :root {
-            --primary-color: rgb(48,52,152); 
-            --secondary-color: #4d51d8; 
+            --primary-color: rgb(48, 52, 152);
+            --secondary-color: #4d51d8;
             --background-color: #fff;
             --text-color: #333;
             --light-text-color: #fff;
@@ -38,7 +41,7 @@
 
         header {
             background-color: var(--primary-color);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             position: fixed;
             top: 0;
             left: 0;
@@ -111,7 +114,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(rgba(48,52,152, 0.3), rgba(0, 0, 0, 0.5));
+            background: linear-gradient(rgba(48, 52, 152, 0.3), rgba(0, 0, 0, 0.5));
             z-index: 1;
         }
 
@@ -134,7 +137,7 @@
             font-weight: 800;
             letter-spacing: -0.5px;
             line-height: 1.2;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
         }
 
         .hero p:first-of-type {
@@ -144,14 +147,14 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
         }
 
         .hero p {
-            font-size: 4rem; 
+            font-size: 4rem;
             margin-bottom: 30px;
             font-weight: 500;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
         }
 
         .cta-button {
@@ -194,27 +197,27 @@
             z-index: 1500;
         }
 
-        @media (max-width: 1024px) { 
+        @media (max-width: 1024px) {
             .container {
                 padding: 0 30px;
             }
-            
+
             .hero h1 {
                 font-size: 3rem;
             }
-            
+
             .hero p {
                 font-size: 2.5rem;
             }
         }
 
-        @media (max-width: 768px) { 
+        @media (max-width: 768px) {
             .container {
                 padding: 0 20px;
             }
 
             .nav-links {
-                display: none; 
+                display: none;
                 position: fixed;
                 top: 80px;
                 left: 0;
@@ -317,7 +320,7 @@
         .product-showcase {
             padding: 100px 0;
             background: linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)),
-                        url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3') center/cover fixed;
+                url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3') center/cover fixed;
             position: relative;
             width: 100%;
             z-index: 1;
@@ -374,7 +377,7 @@
 
         .product-item.placeholder {
             opacity: 0.5;
-            background: linear-gradient(45deg, rgba(0,0,0,0.05) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.05) 75%);
+            background: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -553,7 +556,7 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             display: block;
         }
@@ -562,6 +565,15 @@
             width: 120px;
             height: 120px;
             display: block;
+        }
+
+        .qr-popup img {
+            max-width: 100%;
+            /* 图片最大宽度不超过容器宽度 */
+            height: auto;
+            /* 图片高度自动调整，保持比例 */
+            display: block;
+            /* 移除图片下方的默认间距 */
         }
 
         .social-icons a:hover {
@@ -593,7 +605,7 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             display: none;
             z-index: 1000;
             margin-bottom: 10px;
@@ -619,7 +631,7 @@
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             .product-info {
                 max-width: 100%;
             }
@@ -629,29 +641,29 @@
             .container {
                 padding: 0 20px;
             }
-            
+
             .product-grid {
                 padding: 0 20px;
                 gap: 30px;
             }
-            
+
             .footer-content {
                 padding: 0 20px;
             }
-            
+
             .footer-content {
-                grid-template-columns: 1fr; 
+                grid-template-columns: 1fr;
             }
-            
+
             .footer-section:first-child,
             .footer-section:last-child {
                 padding: 30px 0;
             }
-            
+
             .contact-info {
                 flex-direction: column;
             }
-            
+
             .social-icons {
                 justify-content: flex-start;
                 margin-top: 20px;
@@ -661,17 +673,12 @@
             .social-icons a {
                 font-size: 1.5rem;
             }
-
-            .qr-popup {
-                left: 0;
-                transform: none;
-            }
         }
 
         .customer-stories {
             padding: 100px 0;
             background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
-                        url('https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3') center/cover fixed;
+                url('https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3') center/cover fixed;
             position: relative;
             overflow: hidden;
         }
@@ -799,12 +806,12 @@
             .stories-grid {
                 padding: 0 20px;
             }
-            
+
             .story-item {
                 flex: 0 0 100%;
                 margin: 0;
             }
-            
+
             .carousel-controls {
                 padding: 0 10px;
             }
@@ -815,13 +822,14 @@
                 grid-template-columns: 1fr;
                 padding: 0 20px;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
     <header>
         <nav class="container">
@@ -838,7 +846,8 @@
     </header>
 
     <section id="home" class="hero">
-        <video autoplay muted loop playsinline poster="https://assets.mixkit.co/videos/4831/4831-thumb-720-0.jpg" class="hero-video">
+        <video autoplay muted loop playsinline poster="https://assets.mixkit.co/videos/4831/4831-thumb-720-0.jpg"
+            class="hero-video">
             <source src="https://assets.mixkit.co/videos/4831/4831-720.mp4" type="video/mp4">
             Your browser does not support the video tag.
         </video>
@@ -872,34 +881,13 @@
         <div class="container">
             <h2 class="section-title">Our Products</h2>
             <div class="product-grid">
-                <div class="product-info">
-                    <h4>Main Functions</h4>
-                    <ul>
-                        <li>Enhances cellular regeneration</li>
-                        <li>Supports immune system function</li>
-                        <li>Promotes healthy metabolism</li>
-                        <li>Improves nutrient absorption</li>
-                        <li>Supports natural detoxification</li>
-                    </ul>
-                </div>
-                
                 <div class="product-item">
-                    <img src="/a/5e0bb564-3173-4b6a-99b9-b750f4b72eb2" alt="Peptide Product" width="200" height="300">
-                    <h3>Peptide Powder - Classic Formula</h3>
-                    <p>Our classic formula, perfect for daily health maintenance.</p>
-                    <a href="https://ttr.malaysia.com/products/classic-formula" class="cta-button">Learn More</a>
-                </div>
-                
-                <div class="product-info">
-                    <h4>Key Advantages</h4>
-                    <ul>
-                        <li>Scientifically proven formula</li>
-                        <li>100% natural ingredients</li>
-                        <li>No artificial additives</li>
-                        <li>Easy to absorb</li>
-                        <li>Suitable for daily use</li>
-                    </ul>
-                </div>
+                    <img src="product.jpg" alt="tangtairan Product" width="200" height="300">
+                    <h3>Natural Soy O-Peptide</h3>
+                    <p>Soybean Protein Isolates(SPI)</p>
+                    <p>Patented Ingredient</p>
+                    <a href="https://wa.me/60123456789" class="cta-button">Learn More</a>
+                </div>                
             </div>
         </div>
     </section>
@@ -915,7 +903,8 @@
                     <h3>Sarah Chen</h3>
                     <div class="story-role">Health Enthusiast</div>
                     <p class="story-text">
-                        "TTR Peptides has transformed my daily wellness routine. After 3 months, I've noticed remarkable improvements in my energy levels and overall health."
+                        "TTR Peptides has transformed my daily wellness routine. After 3 months, I've noticed remarkable
+                        improvements in my energy levels and overall health."
                     </p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i>
@@ -932,7 +921,8 @@
                     <h3>David Wong</h3>
                     <div class="story-role">Fitness Trainer</div>
                     <p class="story-text">
-                        "As a fitness professional, I'm very selective about supplements. TTR Peptides stands out for its quality and effectiveness."
+                        "As a fitness professional, I'm very selective about supplements. TTR Peptides stands out for
+                        its quality and effectiveness."
                     </p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i>
@@ -949,7 +939,8 @@
                     <h3>Lisa Tan</h3>
                     <div class="story-role">Wellness Coach</div>
                     <p class="story-text">
-                        "I've recommended TTR Peptides to many of my clients. The results have been consistently impressive across different health goals."
+                        "I've recommended TTR Peptides to many of my clients. The results have been consistently
+                        impressive across different health goals."
                     </p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i>
@@ -963,7 +954,8 @@
                     <div class="story-image"><i class="fas fa-user-circle"></i></div>
                     <h3>Michael Lim</h3>
                     <div class="story-role">Business Executive</div>
-                    <p class="story-text">"TTR Peptides has helped me maintain my energy levels during long work days. A true game-changer!"</p>
+                    <p class="story-text">"TTR Peptides has helped me maintain my energy levels during long work days. A
+                        true game-changer!"</p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                         <i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -973,7 +965,8 @@
                     <div class="story-image"><i class="fas fa-user-circle"></i></div>
                     <h3>Amanda Ng</h3>
                     <div class="story-role">Professional Athlete</div>
-                    <p class="story-text">"The recovery benefits I've experienced with TTR Peptides are remarkable. Essential for my training routine."</p>
+                    <p class="story-text">"The recovery benefits I've experienced with TTR Peptides are remarkable.
+                        Essential for my training routine."</p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                         <i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -983,7 +976,8 @@
                     <div class="story-image"><i class="fas fa-user-circle"></i></div>
                     <h3>Dr. James Teo</h3>
                     <div class="story-role">Healthcare Professional</div>
-                    <p class="story-text">"I recommend TTR Peptides to my patients. The scientific backing and results speak for themselves."</p>
+                    <p class="story-text">"I recommend TTR Peptides to my patients. The scientific backing and results
+                        speak for themselves."</p>
                     <div class="story-rating">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                         <i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -1003,7 +997,8 @@
             <div class="footer-section" id="about">
                 <h3>About Us</h3>
                 <div class="about-info">
-                    <p>TTR® Peptides is Malaysia's leading provider of innovative health solutions. With over a decade of experience, we're committed to enhancing lives through advanced peptide technology.</p>
+                    <p>TTR® Peptides is Malaysia's leading provider of innovative health solutions. With over a decade
+                        of experience, we're committed to enhancing lives through advanced peptide technology.</p>
                 </div>
             </div>
             <div class="footer-section" id="contact">
@@ -1011,45 +1006,40 @@
                 <div class="contact-info">
                     <div class="contact-details">
                         <p><i class="fas fa-phone"></i> +60 189816818</p>
-                        <p><i class="fas fa-envelope"></i> info@ttr.malaysia.com</p>
+                        <p><i class="fas fa-envelope"></i> tangtairang@gmail.com</p>
                         <p>
-                            <a href="https://goo.gl/maps/KLCC" target="_blank" class="location-trigger">
-                                <i class="fas fa-map-marker-alt"></i> Level 36, Menara 2 Petronas, Kuala Lumpur City Centre
+                            <a href="https://maps.app.goo.gl/9vx4Se76JsELzef9A" target="_blank"
+                                class="location-trigger">
+                                <i class="fas fa-map-marker-alt"></i> D-47-UG,JALAN C180/1
+                                DATARAN C180 43200 CHERAS SELANGOR D E
                                 <div class="map-popup">
-                                    <iframe 
-                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3983.7686557209882!2d101.71395831475882!3d3.158282977415386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc37d0d4779495%3A0x815d41677c991e!2sPetronas%20Twin%20Tower%202!5e0!3m2!1sen!2s!4v1623456789012!5m2!1sen!2s" 
-                                        width="400" 
-                                        height="300" 
-                                        style="border:0;" 
-                                        allowfullscreen="" 
-                                        loading="lazy">
+                                    <iframe src="https://maps.app.goo.gl/9vx4Se76JsELzef9A" width="400" height="300"
+                                        style="border:0;" allowfullscreen="" loading="lazy">
                                     </iframe>
                                 </div>
                             </a>
                         </p>
                         <p>
-                            <a href="https://goo.gl/maps/BangsarSouth" target="_blank" class="location-trigger">
-                                <i class="fas fa-map-marker-alt"></i> Lot 13A, The Vertical Office Suites, Avenue 3, Bangsar South
+                            <a href="https://maps.app.goo.gl/uguqFC64pGoycRRo9" target="_blank"
+                                class="location-trigger">
+                                <i class="fas fa-map-marker-alt"></i> GREENLEAF NO. 190 ASSYAKIRIM COMMERCIAL SQUARE
+                                97000
+                                BINTULU, SARAWAK, MALAYSIA
                                 <div class="map-popup">
-                                    <iframe 
-                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3983.7686557209882!2d101.71395831475882!3d3.158282977415386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc37d0d4779495%3A0x815d41677c991e!2sPetronas%20Twin%20Tower%202!5e0!3m2!1sen!2s!4v1623456789012!5m2!1sen!2s" 
-                                        width="400" 
-                                        height="300" 
-                                        style="border:0;" 
-                                        allowfullscreen="" 
-                                        loading="lazy">
+                                    <iframe src="https://maps.app.goo.gl/uguqFC64pGoycRRo9" width="400" height="300"
+                                        style="border:0;" allowfullscreen="" loading="lazy">
                                     </iframe>
                                 </div>
                             </a>
                         </p>
                     </div>
                     <div class="social-icons">
-                        <a href="https://www.facebook.com/TTRMalaysia" target="_blank" title="Facebook">
+                        <a href="https://www.facebook.com/xieuropeofficial " target="_blank" title="Facebook">
                             <i class="fab fa-facebook"></i>
                             <div class="qr-popup">
                                 <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
-                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
+                                    <path d="M20 20h60v60h-60z" fill="black" />
                                 </svg>
                             </div>
                         </a>
@@ -1057,8 +1047,8 @@
                             <i class="fab fa-whatsapp"></i>
                             <div class="qr-popup">
                                 <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
-                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
+                                    <path d="M20 20h60v60h-60z" fill="black" />
                                 </svg>
                             </div>
                         </a>
@@ -1066,8 +1056,8 @@
                             <i class="fab fa-weixin"></i>
                             <div class="qr-popup">
                                 <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black"/>
-                                    <path d="M20 20h60v60h-60z" fill="black"/>
+                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
+                                    <path d="M20 20h60v60h-60z" fill="black" />
                                 </svg>
                             </div>
                         </a>
@@ -1080,7 +1070,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollTrigger.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             gsap.registerPlugin(ScrollTrigger);
 
             const heroContent = document.querySelector('.hero-content');
@@ -1121,7 +1111,7 @@
                         duration: 2,
                         ease: "power1.out",
                         snap: { textContent: 1 },
-                        onUpdate: function() {
+                        onUpdate: function () {
                             if (finalValue.includes('%')) {
                                 const value = Math.round(this.progress() * parseFloat(finalValue));
                                 stat.textContent = `${value}%`;
@@ -1144,11 +1134,11 @@
                     trigger.addEventListener('mouseenter', () => {
                         mapPopup.style.display = 'block';
                     });
-                    
+
                     trigger.addEventListener('mouseleave', () => {
                         mapPopup.style.display = 'none';
                     });
-                    
+
                     mapPopup.addEventListener('click', (e) => {
                         e.stopPropagation();
                     });
@@ -1164,7 +1154,7 @@
                 });
             });
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 const mapPopups = document.querySelectorAll('.map-popup');
                 if (!e.target.closest('.location-trigger')) {
                     mapPopups.forEach(popup => {
@@ -1179,14 +1169,14 @@
             const prevButton = document.querySelector('.prev-button');
             const nextButton = document.querySelector('.next-button');
             const carouselIndicators = document.querySelector('.carousel-indicators');
-            
+
             const itemsPerView = window.innerWidth <= 768 ? 1 : 3;
             let currentIndex = 0;
 
-            for(let i = 0; i < Math.ceil(storyItems.length / itemsPerView); i++) {
+            for (let i = 0; i < Math.ceil(storyItems.length / itemsPerView); i++) {
                 const indicator = document.createElement('div');
                 indicator.classList.add('carousel-indicator');
-                if(i === 0) indicator.classList.add('active');
+                if (i === 0) indicator.classList.add('active');
                 indicator.addEventListener('click', () => {
                     currentIndex = i * itemsPerView;
                     showStories(currentIndex);
@@ -1197,14 +1187,14 @@
             function updateIndicators() {
                 const indicators = document.querySelectorAll('.carousel-indicator');
                 indicators.forEach((indicator, index) => {
-                    indicator.classList.toggle('active', 
+                    indicator.classList.toggle('active',
                         index === Math.floor(currentIndex / itemsPerView));
                 });
             }
 
             function showStories(index) {
                 storyItems.forEach(item => item.classList.remove('active'));
-                for(let i = 0; i < itemsPerView; i++) {
+                for (let i = 0; i < itemsPerView; i++) {
                     const itemIndex = (index + i) % storyItems.length;
                     storyItems[itemIndex].classList.add('active');
                 }
@@ -1256,12 +1246,12 @@
                 duration: 1,
                 ease: 'power3.out'
             });
-            
+
             const navLinks = document.querySelector('.nav-links');
             const menuToggle = document.querySelector('.menu-toggle');
             menuToggle.addEventListener('click', () => {
                 navLinks.classList.toggle('active');
-                menuToggle.innerHTML = navLinks.classList.contains('active') ? 
+                menuToggle.innerHTML = navLinks.classList.contains('active') ?
                     '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
             });
 
@@ -1281,4 +1271,5 @@
         });
     </script>
 </body>
+
 </html>
