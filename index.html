@@ -556,24 +556,17 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
             display: block;
-        }
-
-        .qr-popup svg {
-            width: 120px;
-            height: 120px;
-            display: block;
+            width: 140px; /* Add fixed width */
+            height: 140px; /* Add fixed height */
         }
 
         .qr-popup img {
-            max-width: 100%;
-            /* 图片最大宽度不超过容器宽度 */
-            height: auto;
-            /* 图片高度自动调整，保持比例 */
+            width: 120px;
+            height: 120px;
             display: block;
-            /* 移除图片下方的默认间距 */
         }
 
         .social-icons a:hover {
@@ -1037,28 +1030,19 @@
                         <a href="https://www.facebook.com/xieuropeofficial " target="_blank" title="Facebook">
                             <i class="fab fa-facebook"></i>
                             <div class="qr-popup">
-                                <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
-                                    <path d="M20 20h60v60h-60z" fill="black" />
-                                </svg>
+                               <img src="/fbQR.png" alt="Facebook QR Code" width="120" height="120">
                             </div>
                         </a>
                         <a href="https://wa.me/60123456789" target="_blank" title="WhatsApp">
                             <i class="fab fa-whatsapp"></i>
                             <div class="qr-popup">
-                                <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
-                                    <path d="M20 20h60v60h-60z" fill="black" />
-                                </svg>
+                               <img src="/fbQR.png" alt="WhatsApp QR Code" width="120" height="120">
                             </div>
                         </a>
                         <a href="https://wechat.com" target="_blank" title="WeChat">
                             <i class="fab fa-weixin"></i>
                             <div class="qr-popup">
-                                <svg viewBox="0 0 100 100">
-                                    <path d="M10 10h80v80h-80z" fill="none" stroke="black" />
-                                    <path d="M20 20h60v60h-60z" fill="black" />
-                                </svg>
+                                <img src="wechat.jpg" alt="Wechat QR Code" width="120" height="120">
                             </div>
                         </a>
                     </div>
