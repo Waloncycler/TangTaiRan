@@ -829,11 +829,11 @@
             <div class="logo">TTR® 唐肽燃®</div>
             <div class="menu-toggle"><i class="fas fa-bars"></i></div>
             <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#products">Products</a></li>
-                <li><a href="#customer-stories">Customer Stories</a></li>
-                <li><a href="#about">About Us</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li><a href="#home">Home 主页</a></li>
+                <li><a href="#products">Products 产品</a></li>
+                <li><a href="#customer-stories">Customer Stories 客户心声</a></li>
+                <li><a href="#about">About Us 关于我们</a></li>
+                <li><a href="#contact">Contact 联系我们</a></li>
             </ul>
         </nav>
     </header>
@@ -856,7 +856,7 @@
                 <div class="stat-label">植物萃取</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">1K+</div>
+                <div class="stat-number">5K+</div>
                 <div class="stat-label">客户数量</div>
             </div>
             <div class="stat-item">
@@ -864,7 +864,7 @@
                 <div class="stat-label">复购率</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">200K+</div>
+                <div class="stat-number">100K+</div>
                 <div class="stat-label">产品销量</div>
             </div>
         </div>
@@ -872,13 +872,13 @@
 
     <section id="products" class="product-showcase">
         <div class="container">
-            <h2 class="section-title">Our Products</h2>
+            <h2 class="section-title">Our Products 产品</h2>
             <div class="product-grid">
                 <div class="product-item">
                     <img src="productimg.jpg" alt="tangtairan Product" width="200" height="300">
-                    <h3>Natural Soy O-Peptide</h3>
-                    <p>Soybean Protein Isolates(SPI)</p>
-                    <p>Patented Ingredient</p>
+                    <h3>Natural Soy O-Peptide 天然大豆肽</h3>
+                    <p>Soybean Protein Isolates(SPI) 大豆蛋白</p>
+                    <p>Patented Ingredient 专利成分</p>
                     <a href="https://www.facebook.com/xieuropeofficial" class="cta-button">Learn More</a>
                 </div>
             </div>
@@ -887,7 +887,7 @@
 
     <section id="customer-stories" class="customer-stories">
         <div class="container">
-            <h2 class="section-title">Customer Stories</h2>
+            <h2 class="section-title">Customer Stories 客户心声</h2>
             <div class="stories-grid">
                 <div class="story-item">
                     <div class="story-image">
@@ -988,23 +988,23 @@
     <footer>
         <div class="container footer-content">
             <div class="footer-section" id="about">
-                <h3>About Us</h3>
+                <h3>About Us 关于我们</h3>
                 <div class="about-info">
                     <p>TTR® Peptides is Malaysia's leading provider of innovative health solutions. With over a decade
                         of experience, we're committed to enhancing lives through advanced peptide technology.</p>
                 </div>
             </div>
             <div class="footer-section" id="contact">
-                <h3>Contact Us</h3>
+                <h3>Contact Us 联系我们</h3>
                 <div class="contact-info">
                     <div class="contact-details">
                         <p><i class="fas fa-phone"></i> +60 189816818</p>
                         <p><i class="fas fa-envelope"></i> tangtairang@gmail.com</p>
                         <p>
-                            <a href="https://maps.app.goo.gl/9vx4Se76JsELzef9A" target="_blank"
+                            <a href="https://maps.app.goo.gl/R55xoKPELAbXy1eJ7" target="_blank"
                                 class="location-trigger">
-                                <i class="fas fa-map-marker-alt"></i> D-47-UG,JALAN C180/1
-                                DATARAN C180 43200 CHERAS SELANGOR D E
+                                <i class="fas fa-map-marker-alt"></i> L 1-3A THE LINK 2, jalan jalil perkasa 1,
+                                BUKIT JALIL 57000 Kuala Lumpur
                                 <div class="map-popup">
                                     <iframe src="https://maps.app.goo.gl/9vx4Se76JsELzef9A" width="400" height="300"
                                         style="border:0;" allowfullscreen="" loading="lazy">
@@ -1036,12 +1036,6 @@
                             <i class="fab fa-whatsapp"></i>
                             <div class="qr-popup">
                                <img src="WhatsAppQR.png" alt="WhatsApp QR Code" width="120" height="120">
-                            </div>
-                        </a>
-                        <a href="https://wechat.com" target="_blank" title="WeChat">
-                            <i class="fab fa-weixin"></i>
-                            <div class="qr-popup">
-                                <img src="WechatQR.png" alt="Wechat QR Code" width="120" height="120">
                             </div>
                         </a>
                     </div>
@@ -1099,10 +1093,10 @@
                                 const value = Math.round(this.progress() * parseFloat(finalValue));
                                 stat.textContent = `${value}%`;
                             } else if (finalValue.includes('K')) {
-                                const value = Math.round(this.progress() * 50);
+                                const value = Math.round(this.progress() * parseFloat(finalValue));
                                 stat.textContent = `${value}K+`;
                             } else if (finalValue.includes('M')) {
-                                const value = Math.round(this.progress() * 1);
+                                const value = Math.round(this.progress() * parseFloat(finalValue));
                                 stat.textContent = `${value}M+`;
                             }
                         }
