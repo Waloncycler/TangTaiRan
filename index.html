@@ -1,7 +1,6 @@
 <html>
 
 <head>
-    <base href="https://www.tangtairan.shop/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>唐肽燃 | Malaysia</title>
@@ -251,12 +250,6 @@
                 font-size: 2rem;
             }
 
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-                padding: 15px;
-            }
-
             .product-showcase {
                 padding: 100px 0;
             }
@@ -370,11 +363,6 @@
             font-weight: bold;
         }
 
-        .product-item {
-            flex: 0 0 auto;
-            max-width: 400px;
-        }
-
         .product-item.placeholder {
             opacity: 0.5;
             background: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
@@ -392,6 +380,8 @@
         }
 
         .product-item {
+            flex: 0 0 auto;
+            max-width: 800px;
             text-align: center;
             padding: 30px;
             background: rgba(255, 255, 255, 0.95);
@@ -406,9 +396,8 @@
         }
 
         .product-item img {
-            width: 200px;
-            height: auto;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
         }
 
         .product-item h3 {
@@ -556,11 +545,13 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             display: block;
-            width: 140px; /* Add fixed width */
-            height: 140px; /* Add fixed height */
+            width: 140px;
+            /* Add fixed width */
+            height: 140px;
+            /* Add fixed height */
         }
 
         .qr-popup img {
@@ -808,9 +799,7 @@
             .carousel-controls {
                 padding: 0 10px;
             }
-        }
 
-        @media (max-width: 768px) {
             .stories-grid {
                 grid-template-columns: 1fr;
                 padding: 0 20px;
@@ -818,6 +807,15 @@
 
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .product-item {
+                padding: 20px;
+            }
+
+            .product-item img {
+                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -875,7 +873,7 @@
             <h2 class="section-title">Our Products 产品</h2>
             <div class="product-grid">
                 <div class="product-item">
-                    <img src="productimg.jpg" alt="tangtairan Product" width="200" height="300">
+                    <img src="productimg2.png" width="480" height="auto">
                     <h3>Natural Soy O-Peptide 天然大豆肽</h3>
                     <p>Soybean Protein Isolates(SPI) 大豆蛋白</p>
                     <p>Patented Ingredient 专利成分</p>
@@ -1029,13 +1027,13 @@
                         <a href="https://www.facebook.com/xieuropeofficial " target="_blank" title="Facebook">
                             <i class="fab fa-facebook"></i>
                             <div class="qr-popup">
-                               <img src="FBQR.png" alt="Facebook QR Code" width="120" height="120">
+                                <img src="FBQR.png" alt="Facebook QR Code" width="120" height="120">
                             </div>
                         </a>
                         <a href="https://wa.me/60189816818" target="_blank" title="WhatsApp">
                             <i class="fab fa-whatsapp"></i>
                             <div class="qr-popup">
-                               <img src="WhatsAppQR.png" alt="WhatsApp QR Code" width="120" height="120">
+                                <img src="WhatsAppQR.png" alt="WhatsApp QR Code" width="120" height="120">
                             </div>
                         </a>
                     </div>
