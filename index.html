@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <style>
+        /* 优化CSS变量 */
         :root {
             --primary-color: rgb(48, 52, 152);
             --secondary-color: #4d51d8;
@@ -15,12 +16,16 @@
             --light-text-color: #fff;
         }
 
-        * {
+        /* 基础重置 */
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        /* 字体和颜色 */
         body {
             font-family: 'Poppins', sans-serif;
             line-height: 1.6;
@@ -28,16 +33,19 @@
             background-color: var(--background-color);
         }
 
+        /* 滚动行为 */
         html {
             scroll-behavior: smooth;
         }
 
+        /* 容器 */
         .container {
             max-width: 100%;
             margin: 0 auto;
             padding: 0 60px;
         }
 
+        /* 头部和导航 */
         header {
             background-color: var(--primary-color);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -67,10 +75,8 @@
         .nav-links {
             display: flex;
             list-style: none;
-        }
-
-        .nav-links li {
-            margin-left: 30px;
+            gap: 30px;
+            /* 替换所有li的margin-left */
         }
 
         .nav-links a {
@@ -84,6 +90,7 @@
             color: var(--secondary-color);
         }
 
+        /* 英雄区域 */
         .hero {
             position: relative;
             min-height: 100vh;
@@ -139,16 +146,6 @@
             text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
         }
 
-        .hero p:first-of-type {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--light-text-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
-        }
-
         .hero p {
             font-size: 4rem;
             margin-bottom: 30px;
@@ -156,6 +153,7 @@
             text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
         }
 
+        /* 调用和重用按钮样式 */
         .cta-button {
             display: inline-block;
             padding: 15px 30px;
@@ -173,31 +171,36 @@
         }
 
         .stats-grid {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
+            bottom: 100px;
             position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 30px;
-            padding: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            padding: 25px;
             text-align: center;
             z-index: 1500;
-            width: 100%;
         }
 
         .stat-item {
-            padding: 30px 20px;
+            flex: 1 1 200px;
             border-radius: 8px;
             transition: transform 0.3s ease;
             position: relative;
             z-index: 1500;
+            text-align: center;
+            max-width: calc(25% - 15px);
         }
 
         @media (max-width: 1024px) {
-            .container {
+
+            .container,
+            .product-grid,
+            .footer-content,
+            .stories-grid,
+            .stats-grid {
                 padding: 0 30px;
             }
 
@@ -211,7 +214,12 @@
         }
 
         @media (max-width: 768px) {
-            .container {
+
+            .container,
+            .product-grid,
+            .footer-content,
+            .stories-grid,
+            .stats-grid {
                 padding: 0 20px;
             }
 
@@ -225,14 +233,11 @@
                 flex-direction: column;
                 padding: 20px 0;
                 text-align: center;
+                gap: 10px;
             }
 
             .nav-links.active {
                 display: flex;
-            }
-
-            .nav-links li {
-                margin: 10px 0;
             }
 
             .menu-toggle {
@@ -277,27 +282,14 @@
             }
         }
 
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .product-grid {
-                gap: 20px;
-            }
-
-            .stories-grid {
-                padding: 0 40px;
-            }
-
-            .story-item {
-                flex: 0 0 calc(50% - 20px);
-            }
-        }
-
+        /* 其他样式优化 */
         .stat-item:hover {
             transform: translateY(-3px);
         }
 
         .stat-number {
-            font-size: 3.2rem;
-            font-weight: 600;
+            font-size: 2.2rem;
+            font-weight: 400;
             color: var(--light-text-color);
             margin-bottom: 10px;
             line-height: 1;
@@ -306,14 +298,13 @@
         .stat-label {
             font-size: 1rem;
             color: var(--light-text-color);
-            font-weight: 400;
+            font-weight: 200;
             line-height: 1.4;
         }
 
         .product-showcase {
             padding: 100px 0;
-            background: linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)),
-                url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3') center/cover fixed;
+            background: linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)), url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3') center/cover fixed;
             position: relative;
             width: 100%;
             z-index: 1;
@@ -549,9 +540,7 @@
             z-index: 1000;
             display: block;
             width: 140px;
-            /* Add fixed width */
             height: 140px;
-            /* Add fixed height */
         }
 
         .qr-popup img {
@@ -622,7 +611,12 @@
         }
 
         @media (max-width: 768px) {
-            .container {
+
+            .container,
+            .product-grid,
+            .footer-content,
+            .stories-grid,
+            .stats-grid {
                 padding: 0 20px;
             }
 
@@ -661,8 +655,7 @@
 
         .customer-stories {
             padding: 100px 0;
-            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
-                url('https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3') center/cover fixed;
+            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url('https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3') center/cover fixed;
             position: relative;
             overflow: hidden;
         }
@@ -846,7 +839,7 @@
         <div class="hero-content">
             <h1>唐肽燃®</h1>
             <p>Trust, Transform, Restore</p>
-            <p style="font-size: 4rem;">让你健康无忧</p>
+            <p>让你健康无忧</p>
         </div>
         <div class="stats-grid">
             <div class="stat-item">
