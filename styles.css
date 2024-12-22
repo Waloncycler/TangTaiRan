@@ -765,3 +765,31 @@ body {
 .dark-mode .dark-mode-toggle {
     color: var(--text-color);
 }
+
+.system-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2c3e50 !important;
+    font-weight: 600;
+}
+
+.system-link:hover {
+    color: #34495e !important;
+}
+
+.system-link i {
+    font-size: 0.9em;
+}
+
+/* 适配移动端样式 */
+@media (max-width: 768px) {
+    .nav-links {
+        /* 确保在移动端菜单中管理系统链接也能正确显示 */
+        width: 100%;
+    }
+    
+    .system-link {
+        justify-content: center;
+    }
+}
