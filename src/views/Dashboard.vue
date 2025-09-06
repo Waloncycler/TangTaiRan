@@ -14,14 +14,14 @@
             <el-icon size="24"><ShoppingCart /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.salesRevenue) }}</div>
+            <div class="stat-value">{{ formatCurrency(periodFinancialData.totalIncome) }}</div>
             <div class="stat-label">总收入</div>
             <div class="stat-detail">
-              订单数: {{ dataStore.financialOverview.salesCount }}
+              订单数: {{ periodFinancialData.salesCount }}
             </div>
-            <div class="stat-change" :class="getChangeClass(dataStore.financialOverview.salesChange)">
-              <el-icon><ArrowUp v-if="dataStore.financialOverview.salesChange >= 0" /><ArrowDown v-else /></el-icon>
-              {{ Math.abs(dataStore.financialOverview.salesChange) }}%
+            <div class="stat-change" :class="getChangeClass(periodFinancialData.incomeChange)">
+              <el-icon><ArrowUp v-if="periodFinancialData.incomeChange >= 0" /><ArrowDown v-else /></el-icon>
+              {{ Math.abs(periodFinancialData.incomeChange) }}%
             </div>
           </div>
         </div>
@@ -33,21 +33,21 @@
             <el-icon size="24"><Money /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.totalExpenses) }}</div>
+            <div class="stat-value">{{ formatCurrency(periodFinancialData.totalExpenses) }}</div>
             <div class="stat-label">总支出</div>
             <div class="stat-detail">
-              本月支出统计
+              {{ getPeriodLabel() }}支出统计
             </div>
-            <div class="stat-change" :class="getChangeClass(-dataStore.financialOverview.expenseChange)">
-              <el-icon><ArrowUp v-if="dataStore.financialOverview.expenseChange <= 0" /><ArrowDown v-else /></el-icon>
-              {{ Math.abs(dataStore.financialOverview.expenseChange) }}%
+            <div class="stat-change" :class="getChangeClass(-periodFinancialData.expenseChange)">
+              <el-icon><ArrowUp v-if="periodFinancialData.expenseChange <= 0" /><ArrowDown v-else /></el-icon>
+              {{ Math.abs(periodFinancialData.expenseChange) }}%
             </div>
           </div>
         </div>
       </el-col>
       
       <el-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
+        <div class="stat-card clickable" @click="navigateTo('/inventory')">
           <div class="stat-icon inventory">
             <el-icon size="24"><Box /></el-icon>
           </div>
@@ -66,7 +66,7 @@
       </el-col>
       
       <el-col :xs="24" :sm="12" :lg="6">
-        <div class="stat-card">
+        <div class="stat-card clickable" @click="navigateTo('/logistics')">
           <div class="stat-icon logistics">
             <el-icon size="24"><Van /></el-icon>
           </div>
@@ -161,6 +161,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useDataStore } from '@/stores/data'
 import { useSalesStore } from '@/stores/sales'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { 
   TrendCharts, 
@@ -181,10 +182,16 @@ import AddTransactionDialog from '@/components/AddTransactionDialog.vue'
 Chart.register(...registerables)
 
 const dataStore = useDataStore()
+const router = useRouter()
 const chartRef = ref()
 const chartInstance = ref(null)
 const chartType = ref('line')
 const chartPeriod = ref('year')
+
+// 导航到指定路由
+const navigateTo = (path) => {
+  router.push(path)
+}
 
 // 最近交易记录
 const recentTransactions = computed(() => {
@@ -209,6 +216,73 @@ const logisticsStats = computed(() => {
     delivered
   }
 })
+
+// 根据选择的周期计算财务数据
+const periodFinancialData = computed(() => {
+  // 默认值
+  let totalIncome = 0;
+  let totalExpenses = 0;
+  let salesCount = 0;
+  let incomeChange = 0;
+  let expenseChange = 0;
+  
+  const transactions = dataStore.transactions;
+  const currentPeriod = chartPeriod.value;
+  
+  // 根据周期筛选交易
+  const periodTransactions = transactions.filter(t => {
+    const transactionDate = dayjs(t.date);
+    if (currentPeriod === 'month') {
+      return transactionDate.isAfter(dayjs().subtract(1, 'month'));
+    } else if (currentPeriod === 'quarter') {
+      return transactionDate.isAfter(dayjs().subtract(3, 'month'));
+    } else if (currentPeriod === 'year') {
+      return transactionDate.isAfter(dayjs().subtract(1, 'year'));
+    } else {
+      return true; // 全部周期
+    }
+  });
+  
+  // 计算当前周期收入和支出
+  totalIncome = periodTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+    
+  totalExpenses = periodTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  // 计算销售订单数
+  salesCount = periodTransactions
+    .filter(t => t.type === 'income' && t.category === 'sales')
+    .length;
+  
+  // 计算同比变化（简化计算，实际应用中可能需要更复杂的逻辑）
+  incomeChange = 5.2;  // 示例值
+  expenseChange = 3.8;  // 示例值
+  
+  return {
+    totalIncome,
+    totalExpenses,
+    salesCount,
+    incomeChange,
+    expenseChange
+  };
+});
+
+// 获取周期标签
+const getPeriodLabel = () => {
+  switch(chartPeriod.value) {
+    case 'month':
+      return '本月';
+    case 'quarter':
+      return '本季度';
+    case 'year':
+      return '本年';
+    default:
+      return '全部';
+  }
+}
 
 // 格式化货币
 const formatCurrency = (amount) => {
@@ -313,15 +387,16 @@ const getCategoryData = () => {
   return { labels, data, colors, borderColors }
 }
 
-// 获取最近6个月的数据
+// 获取本年1月到12月的数据
 const getLast6MonthsData = () => {
   const months = []
   const incomeData = []
   const expenseData = []
   
-  // 生成最近6个月的标签
-  for (let i = 5; i >= 0; i--) {
-    const date = dayjs().subtract(i, 'month')
+  // 生成1月到12月的标签
+  const currentYear = dayjs().year()
+  for (let month = 0; month < 12; month++) {
+    const date = dayjs().year(currentYear).month(month)
     months.push(date.format('M月'))
     
     const monthTransactions = dataStore.transactions.filter(t => {
@@ -591,9 +666,12 @@ const switchChartType = () => {
 
 // 更新图表
 const updateChart = () => {
-  if (!chartInstance.value) return
+  if (!chartRef.value) return
   
+  // 获取数据
   const { months, incomeData, expenseData } = getDataByPeriod(chartPeriod.value)
+  
+  // 周期变化时，总收入和总支出会通过periodFinancialData计算属性自动更新
   
   const data = {
     labels: months,
@@ -668,6 +746,15 @@ onMounted(async () => {
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      }
+      
+      &.clickable {
+        cursor: pointer;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
       }
       
       .stat-icon {

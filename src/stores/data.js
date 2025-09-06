@@ -40,8 +40,11 @@ export const useDataStore = defineStore('data', () => {
     // 获取销售数据
     const salesStore = useSalesStore()
     
-    const currentMonth = dayjs().month()
-    const currentYear = dayjs().year()
+    // 使用示例数据的年月，而不是当前年月
+    // 从第一条交易记录中获取年月
+    const sampleDate = transactions.value.length > 0 ? dayjs(transactions.value[0].date) : dayjs()
+    const currentMonth = sampleDate.month()
+    const currentYear = sampleDate.year()
     
     const currentMonthTransactions = transactions.value.filter(t => {
       const date = dayjs(t.date)
@@ -65,10 +68,12 @@ export const useDataStore = defineStore('data', () => {
     })
     
     const calculateTotals = (transactions, sales = []) => {
+      // 只计算交易中的收入，不再加上销售收入，避免重复计算
       const transactionIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
       const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0)
       const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
-      const totalIncome = transactionIncome + salesRevenue
+      // 总收入只使用交易收入，不再加上销售收入
+      const totalIncome = transactionIncome
       const net = totalIncome - expense
       return { transactionIncome, salesRevenue, totalIncome, expense, net }
     }
