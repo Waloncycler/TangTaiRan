@@ -1,0 +1,354 @@
+// 全局样式文件
+@import './variables.scss';
+
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: $font-family-base;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--el-fill-color-lighter);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--el-color-primary-light-5);
+  border-radius: 3px;
+  
+  &:hover {
+    background: var(--el-color-primary);
+  }
+}
+
+// 全局工具类
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+// 间距工具类
+@for $i from 0 through 10 {
+  .m-#{$i} {
+    margin: #{$i * 4}px;
+  }
+  
+  .mt-#{$i} {
+    margin-top: #{$i * 4}px;
+  }
+  
+  .mb-#{$i} {
+    margin-bottom: #{$i * 4}px;
+  }
+  
+  .ml-#{$i} {
+    margin-left: #{$i * 4}px;
+  }
+  
+  .mr-#{$i} {
+    margin-right: #{$i * 4}px;
+  }
+  
+  .p-#{$i} {
+    padding: #{$i * 4}px;
+  }
+  
+  .pt-#{$i} {
+    padding-top: #{$i * 4}px;
+  }
+  
+  .pb-#{$i} {
+    padding-bottom: #{$i * 4}px;
+  }
+  
+  .pl-#{$i} {
+    padding-left: #{$i * 4}px;
+  }
+  
+  .pr-#{$i} {
+    padding-right: #{$i * 4}px;
+  }
+}
+
+// 响应式断点
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: 769px) and (max-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 1025px) {
+    @content;
+  }
+}
+
+// 卡片样式
+.card {
+  background: white;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-light;
+  padding: $spacing-lg;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: $box-shadow-base;
+  }
+}
+
+// 按钮样式增强
+.el-button {
+  border-radius: $border-radius-base;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  
+  &.is-round {
+    border-radius: 20px;
+  }
+}
+
+// 表格样式增强
+.el-table {
+  border-radius: $border-radius-base;
+  overflow: hidden;
+  
+  .el-table__header {
+    th {
+      background-color: var(--el-fill-color-light);
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+  }
+  
+  .el-table__row {
+    &:hover {
+      background-color: var(--el-fill-color-lighter);
+    }
+  }
+}
+
+// 表单样式增强
+.el-form {
+  .el-form-item {
+    margin-bottom: $spacing-lg;
+    
+    .el-form-item__label {
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+    }
+  }
+}
+
+// 输入框样式增强
+.el-input {
+  .el-input__wrapper {
+    border-radius: $border-radius-base;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+    }
+    
+    &.is-focus {
+      box-shadow: 0 0 0 1px var(--el-color-primary);
+    }
+  }
+}
+
+// 选择器样式增强
+.el-select {
+  .el-input {
+    .el-input__wrapper {
+      border-radius: $border-radius-base;
+    }
+  }
+}
+
+// 对话框样式增强
+.el-dialog {
+  border-radius: $border-radius-lg;
+  
+  .el-dialog__header {
+    padding: $spacing-lg $spacing-lg $spacing-md;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+  
+  .el-dialog__body {
+    padding: $spacing-lg;
+  }
+  
+  .el-dialog__footer {
+    padding: $spacing-md $spacing-lg $spacing-lg;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+}
+
+// 消息提示样式增强
+.el-message {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-base;
+}
+
+// 通知样式增强
+.el-notification {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-base;
+}
+
+// 加载样式
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  
+  .el-loading-spinner {
+    .circular {
+      width: 42px;
+      height: 42px;
+    }
+  }
+}
+
+// 空状态样式
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  color: var(--el-text-color-secondary);
+  
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: $spacing-md;
+    opacity: 0.5;
+  }
+  
+  .empty-text {
+    font-size: 16px;
+    margin-bottom: $spacing-sm;
+  }
+  
+  .empty-description {
+    font-size: 14px;
+    color: var(--el-text-color-placeholder);
+  }
+}
+
+// 动画类
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.slide-up-leave-to {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+// 响应式隐藏类
+@include mobile {
+  .hidden-mobile {
+    display: none !important;
+  }
+}
+
+@include tablet {
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+@include desktop {
+  .hidden-desktop {
+    display: none !important;
+  }
+}
+
+// 打印样式
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+}

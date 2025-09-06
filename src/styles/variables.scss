@@ -1,0 +1,217 @@
+// 设计系统变量定义
+
+// 颜色系统
+$primary-color: #409EFF;
+$success-color: #67C23A;
+$warning-color: #E6A23C;
+$danger-color: #F56C6C;
+$info-color: #909399;
+
+// 中性色
+$white: #FFFFFF;
+$black: #000000;
+$gray-50: #FAFAFA;
+$gray-100: #F5F5F5;
+$gray-200: #EEEEEE;
+$gray-300: #E0E0E0;
+$gray-400: #BDBDBD;
+$gray-500: #9E9E9E;
+$gray-600: #757575;
+$gray-700: #616161;
+$gray-800: #424242;
+$gray-900: #212121;
+
+// 文本颜色
+$text-color-primary: #303133;
+$text-color-regular: #606266;
+$text-color-secondary: #909399;
+$text-color-placeholder: #C0C4CC;
+
+// 背景颜色
+$bg-color: #FFFFFF;
+$bg-color-page: #F2F3F5;
+$bg-color-overlay: rgba(0, 0, 0, 0.8);
+
+// 边框颜色
+$border-color: #DCDFE6;
+$border-color-light: #E4E7ED;
+$border-color-lighter: #EBEEF5;
+$border-color-extra-light: #F2F6FC;
+
+// 字体系统
+$font-family-base: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+$font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+
+// 字体大小
+$font-size-xs: 12px;
+$font-size-sm: 13px;
+$font-size-base: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 28px;
+$font-size-4xl: 32px;
+
+// 字体粗细
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高
+$line-height-xs: 1.2;
+$line-height-sm: 1.4;
+$line-height-base: 1.5;
+$line-height-lg: 1.6;
+$line-height-xl: 1.8;
+
+// 间距系统
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-base: 16px;
+$spacing-lg: 20px;
+$spacing-xl: 24px;
+$spacing-2xl: 32px;
+$spacing-3xl: 40px;
+$spacing-4xl: 48px;
+
+// 圆角
+$border-radius-xs: 2px;
+$border-radius-sm: 4px;
+$border-radius-base: 6px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-2xl: 20px;
+$border-radius-full: 50%;
+
+// 阴影
+$box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+$box-shadow-base: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+$box-shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.15);
+$box-shadow-inset: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+
+// 过渡动画
+$transition-base: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+$transition-fade: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+$transition-slide: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+
+// Z-index 层级
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+$z-index-toast: 1080;
+
+// 断点
+$breakpoint-xs: 480px;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+$breakpoint-2xl: 1600px;
+
+// 容器最大宽度
+$container-sm: 540px;
+$container-md: 720px;
+$container-lg: 960px;
+$container-xl: 1140px;
+$container-2xl: 1320px;
+
+// 组件特定变量
+
+// 按钮
+$button-height-sm: 28px;
+$button-height-base: 32px;
+$button-height-lg: 40px;
+$button-padding-horizontal: 15px;
+$button-padding-horizontal-sm: 11px;
+$button-padding-horizontal-lg: 19px;
+
+// 输入框
+$input-height-sm: 28px;
+$input-height-base: 32px;
+$input-height-lg: 40px;
+$input-padding-horizontal: 11px;
+$input-padding-horizontal-sm: 7px;
+$input-padding-horizontal-lg: 15px;
+
+// 表格
+$table-header-bg: #FAFAFA;
+$table-row-hover-bg: #F5F7FA;
+$table-border-color: #EBEEF5;
+$table-cell-padding: 12px 0;
+
+// 卡片
+$card-border-radius: 8px;
+$card-padding: 20px;
+$card-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+
+// 侧边栏
+$sidebar-width: 200px;
+$sidebar-collapsed-width: 64px;
+$sidebar-bg: #FFFFFF;
+$sidebar-border-color: #E4E7ED;
+
+// 头部
+$header-height: 60px;
+$header-bg: #FFFFFF;
+$header-border-color: #E4E7ED;
+
+// 移动端
+$mobile-header-height: 60px;
+$mobile-sidebar-width: 250px;
+
+// 状态颜色
+$status-colors: (
+  'normal': $success-color,
+  'warning': $warning-color,
+  'danger': $danger-color,
+  'info': $info-color,
+  'primary': $primary-color
+);
+
+// 渐变色
+$gradient-primary: linear-gradient(135deg, #409EFF 0%, #66B1FF 100%);
+$gradient-success: linear-gradient(135deg, #67C23A 0%, #85CE61 100%);
+$gradient-warning: linear-gradient(135deg, #E6A23C 0%, #EBB563 100%);
+$gradient-danger: linear-gradient(135deg, #F56C6C 0%, #F78989 100%);
+
+// 主题色变量映射
+:root {
+  --primary-color: #{$primary-color};
+  --success-color: #{$success-color};
+  --warning-color: #{$warning-color};
+  --danger-color: #{$danger-color};
+  --info-color: #{$info-color};
+  
+  --text-color-primary: #{$text-color-primary};
+  --text-color-regular: #{$text-color-regular};
+  --text-color-secondary: #{$text-color-secondary};
+  --text-color-placeholder: #{$text-color-placeholder};
+  
+  --bg-color: #{$bg-color};
+  --bg-color-page: #{$bg-color-page};
+  
+  --border-color: #{$border-color};
+  --border-color-light: #{$border-color-light};
+  --border-color-lighter: #{$border-color-lighter};
+  
+  --border-radius-base: #{$border-radius-base};
+  --border-radius-lg: #{$border-radius-lg};
+  
+  --spacing-base: #{$spacing-base};
+  --spacing-lg: #{$spacing-lg};
+  --spacing-xl: #{$spacing-xl};
+  
+  --box-shadow-light: #{$box-shadow-light};
+  --box-shadow-base: #{$box-shadow-base};
+  
+  --transition-base: #{$transition-base};
+}
