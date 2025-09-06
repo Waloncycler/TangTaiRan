@@ -126,7 +126,12 @@ import {
   ArrowDown, 
   SwitchButton, 
   Expand, 
-  Fold 
+  Fold,
+  DataAnalysis,
+  Money,
+  Box,
+  Van,
+  TrendCharts
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 

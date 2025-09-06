@@ -19,7 +19,7 @@ const routes = [
         path: '/dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '财务概览', icon: 'DataAnalysis' }
+        meta: { title: '系统概览', icon: 'DataAnalysis' }
       },
       {
         path: '/transactions',
@@ -27,12 +27,7 @@ const routes = [
         component: () => import('@/views/Transactions.vue'),
         meta: { title: '账单管理', icon: 'Money' }
       },
-      {
-        path: '/budget',
-        name: 'Budget',
-        component: () => import('@/views/Budget.vue'),
-        meta: { title: '预算管理', icon: 'Wallet' }
-      },
+
       {
         path: '/inventory',
         name: 'Inventory',
@@ -44,6 +39,12 @@ const routes = [
         name: 'Logistics',
         component: () => import('@/views/Logistics.vue'),
         meta: { title: '物流管理', icon: 'Van' }
+      },
+      {
+        path: '/sales',
+        name: 'Sales',
+        component: () => import('@/views/Sales.vue'),
+        meta: { title: '销售统计', icon: 'TrendCharts' }
       }
     ]
   },

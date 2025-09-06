@@ -2,23 +2,26 @@
   <div class="dashboard">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1 class="page-title">财务概览</h1>
-      <p class="page-subtitle">实时监控企业财务状况</p>
+      <h1 class="page-title">系统概览</h1>
+      <p class="page-subtitle">实时监控企业运营状况</p>
     </div>
 
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :xs="24" :sm="12" :lg="6">
         <div class="stat-card">
-          <div class="stat-icon income">
-            <el-icon size="24"><TrendCharts /></el-icon>
+          <div class="stat-icon sales">
+            <el-icon size="24"><ShoppingCart /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.totalIncome) }}</div>
+            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.salesRevenue) }}</div>
             <div class="stat-label">总收入</div>
-            <div class="stat-change" :class="getChangeClass(dataStore.financialOverview.incomeChange)">
-              <el-icon><ArrowUp v-if="dataStore.financialOverview.incomeChange >= 0" /><ArrowDown v-else /></el-icon>
-              {{ Math.abs(dataStore.financialOverview.incomeChange) }}%
+            <div class="stat-detail">
+              订单数: {{ dataStore.financialOverview.salesCount }}
+            </div>
+            <div class="stat-change" :class="getChangeClass(dataStore.financialOverview.salesChange)">
+              <el-icon><ArrowUp v-if="dataStore.financialOverview.salesChange >= 0" /><ArrowDown v-else /></el-icon>
+              {{ Math.abs(dataStore.financialOverview.salesChange) }}%
             </div>
           </div>
         </div>
@@ -32,6 +35,9 @@
           <div class="stat-content">
             <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.totalExpenses) }}</div>
             <div class="stat-label">总支出</div>
+            <div class="stat-detail">
+              本月支出统计
+            </div>
             <div class="stat-change" :class="getChangeClass(-dataStore.financialOverview.expenseChange)">
               <el-icon><ArrowUp v-if="dataStore.financialOverview.expenseChange <= 0" /><ArrowDown v-else /></el-icon>
               {{ Math.abs(dataStore.financialOverview.expenseChange) }}%
@@ -42,15 +48,18 @@
       
       <el-col :xs="24" :sm="12" :lg="6">
         <div class="stat-card">
-          <div class="stat-icon assets">
-            <el-icon size="24"><Wallet /></el-icon>
+          <div class="stat-icon inventory">
+            <el-icon size="24"><Box /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.totalAssets) }}</div>
-            <div class="stat-label">总资产</div>
-            <div class="stat-change" :class="getChangeClass(dataStore.financialOverview.assetChange)">
-              <el-icon><ArrowUp v-if="dataStore.financialOverview.assetChange >= 0" /><ArrowDown v-else /></el-icon>
-              {{ Math.abs(dataStore.financialOverview.assetChange) }}%
+            <div class="stat-value">{{ dataStore.inventoryStats.total }}</div>
+            <div class="stat-label">库存状态</div>
+            <div class="stat-detail">
+              低库存: {{ dataStore.inventoryStats.lowStock }} | 缺货: {{ dataStore.inventoryStats.outOfStock }}
+            </div>
+            <div class="stat-change" :class="dataStore.inventoryStats.lowStock > 0 ? 'negative' : 'positive'">
+              <el-icon><Box /></el-icon>
+              {{ dataStore.inventoryStats.normal }}正常
             </div>
           </div>
         </div>
@@ -58,14 +67,17 @@
       
       <el-col :xs="24" :sm="12" :lg="6">
         <div class="stat-card">
-          <div class="stat-icon net">
-            <el-icon size="24"><DataAnalysis /></el-icon>
+          <div class="stat-icon logistics">
+            <el-icon size="24"><Van /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ formatCurrency(dataStore.financialOverview.netIncome) }}</div>
-            <div class="stat-label">净收入</div>
+            <div class="stat-value">{{ logisticsStats.total }}</div>
+            <div class="stat-label">物流订单</div>
+            <div class="stat-detail">
+              待发货: {{ logisticsStats.pending }} | 运输中: {{ logisticsStats.transit }}
+            </div>
             <div class="stat-change positive">
-              <el-icon><TrendCharts /></el-icon>
+              <el-icon><Van /></el-icon>
               本月
             </div>
           </div>
@@ -73,87 +85,30 @@
       </el-col>
     </el-row>
 
-    <!-- 图表和快速操作 -->
+    <!-- 业务分析图表 -->
     <el-row :gutter="20" class="charts-row">
-      <!-- 收支趋势图 -->
-      <el-col :xs="24" :lg="16">
+      <el-col :span="24">
         <el-card class="chart-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span class="card-title">收支趋势</span>
-              <el-radio-group v-model="chartPeriod" size="small" @change="updateChart">
-                <el-radio-button label="month">本月</el-radio-button>
-                <el-radio-button label="quarter">本季度</el-radio-button>
-                <el-radio-button label="year">本年</el-radio-button>
-              </el-radio-group>
+              <span class="card-title">业务分析</span>
+              <div class="chart-controls">
+                <el-radio-group v-model="chartType" size="small" @change="switchChartType" class="chart-type-selector">
+                  <el-radio-button label="line">趋势图</el-radio-button>
+                  <el-radio-button label="bar">对比图</el-radio-button>
+                  <el-radio-button label="pie">分布图</el-radio-button>
+                </el-radio-group>
+                <el-radio-group v-model="chartPeriod" size="small" @change="updateChart" class="chart-period-selector" v-if="chartType !== 'pie'">
+                  <el-radio-button label="month">本月</el-radio-button>
+                  <el-radio-button label="quarter">本季度</el-radio-button>
+                  <el-radio-button label="year">本年</el-radio-button>
+                  <el-radio-button label="all">全周期</el-radio-button>
+                </el-radio-group>
+              </div>
             </div>
           </template>
           <div class="chart-container">
             <canvas ref="chartRef" width="400" height="200"></canvas>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <!-- 快速操作 -->
-      <el-col :xs="24" :lg="8">
-        <el-card class="quick-actions-card" shadow="hover">
-          <template #header>
-            <span class="card-title">快速操作</span>
-          </template>
-          <div class="quick-actions">
-            <el-button 
-              type="primary" 
-              :icon="Plus" 
-              class="action-btn"
-              @click="showAddTransaction = true"
-            >
-              添加交易
-            </el-button>
-            <el-button 
-              type="success" 
-              :icon="Box" 
-              class="action-btn"
-              @click="$router.push('/inventory')"
-            >
-              库存管理
-            </el-button>
-            <el-button 
-              type="warning" 
-              :icon="Van" 
-              class="action-btn"
-              @click="$router.push('/logistics')"
-            >
-              物流管理
-            </el-button>
-            <el-button 
-              type="info" 
-              :icon="Wallet" 
-              class="action-btn"
-              @click="$router.push('/budget')"
-            >
-              预算管理
-            </el-button>
-          </div>
-        </el-card>
-        
-        <!-- 库存状态 -->
-        <el-card class="inventory-status-card" shadow="hover">
-          <template #header>
-            <span class="card-title">库存状态</span>
-          </template>
-          <div class="inventory-stats">
-            <div class="inventory-stat">
-              <div class="stat-number">{{ dataStore.inventoryStats.total }}</div>
-              <div class="stat-text">总商品</div>
-            </div>
-            <div class="inventory-stat warning">
-              <div class="stat-number">{{ dataStore.inventoryStats.lowStock }}</div>
-              <div class="stat-text">库存不足</div>
-            </div>
-            <div class="inventory-stat danger">
-              <div class="stat-number">{{ dataStore.inventoryStats.outOfStock }}</div>
-              <div class="stat-text">缺货</div>
-            </div>
           </div>
         </el-card>
       </el-col>
@@ -205,6 +160,8 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useDataStore } from '@/stores/data'
+import { useSalesStore } from '@/stores/sales'
+import dayjs from 'dayjs'
 import { 
   TrendCharts, 
   Money, 
@@ -214,7 +171,8 @@ import {
   ArrowDown,
   Plus,
   Box,
-  Van
+  Van,
+  ShoppingCart
 } from '@element-plus/icons-vue'
 import { Chart, registerables } from 'chart.js'
 import AddTransactionDialog from '@/components/AddTransactionDialog.vue'
@@ -225,15 +183,31 @@ Chart.register(...registerables)
 const dataStore = useDataStore()
 const chartRef = ref()
 const chartInstance = ref(null)
-const chartPeriod = ref('month')
-const showAddTransaction = ref(false)
+const chartType = ref('line')
+const chartPeriod = ref('year')
 
-// 最近交易（最多显示5条）
+// 最近交易记录
 const recentTransactions = computed(() => {
   return dataStore.transactions
     .slice()
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5)
+})
+
+// 物流统计
+const logisticsStats = computed(() => {
+  const logistics = dataStore.logistics
+  const total = logistics.length
+  const pending = logistics.filter(item => item.status === 'pending').length
+  const transit = logistics.filter(item => item.status === 'transit').length
+  const delivered = logistics.filter(item => item.status === 'delivered').length
+  
+  return {
+    total,
+    pending,
+    transit,
+    delivered
+  }
 })
 
 // 格式化货币
@@ -269,36 +243,111 @@ const getChangeClass = (change) => {
   return change >= 0 ? 'positive' : 'negative'
 }
 
-// 初始化图表
-const initChart = () => {
-  if (!chartRef.value) return
+// 获取饼图的类别数据
+const getCategoryData = () => {
+  // 获取所有交易
+  const transactions = dataStore.transactions
   
-  const ctx = chartRef.value.getContext('2d')
+  // 按类别分组收入和支出
+  const incomeByCategory = {}
+  const expenseByCategory = {}
   
-  // 模拟数据
-  const data = {
-    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
-    datasets: [
-      {
-        label: '收入',
-        data: [5000, 5500, 4800, 6200, 5800, 6500],
-        borderColor: '#67C23A',
-        backgroundColor: 'rgba(103, 194, 58, 0.1)',
-        tension: 0.4,
-        fill: true
-      },
-      {
-        label: '支出',
-        data: [3200, 3800, 3500, 4100, 3900, 4200],
-        borderColor: '#F56C6C',
-        backgroundColor: 'rgba(245, 108, 108, 0.1)',
-        tension: 0.4,
-        fill: true
+  transactions.forEach(t => {
+    if (t.type === 'income') {
+      if (!incomeByCategory[t.category]) {
+        incomeByCategory[t.category] = 0
       }
-    ]
+      incomeByCategory[t.category] += t.amount
+    } else {
+      if (!expenseByCategory[t.category]) {
+        expenseByCategory[t.category] = 0
+      }
+      expenseByCategory[t.category] += t.amount
+    }
+  })
+  
+  // 准备饼图数据
+  const labels = []
+  const data = []
+  const colors = []
+  const borderColors = []
+  
+  // 收入类别颜色
+  const incomeColors = [
+    'rgba(103, 194, 58, 0.7)',
+    'rgba(103, 194, 58, 0.6)',
+    'rgba(103, 194, 58, 0.5)',
+    'rgba(103, 194, 58, 0.4)',
+    'rgba(103, 194, 58, 0.3)'
+  ]
+  
+  // 支出类别颜色
+  const expenseColors = [
+    'rgba(245, 108, 108, 0.7)',
+    'rgba(245, 108, 108, 0.6)',
+    'rgba(245, 108, 108, 0.5)',
+    'rgba(245, 108, 108, 0.4)',
+    'rgba(245, 108, 108, 0.3)'
+  ]
+  
+  // 添加收入类别
+  Object.entries(incomeByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([category, amount], index) => {
+      labels.push(`${getCategoryName(category)}(收入)`)
+      data.push(amount)
+      colors.push(incomeColors[index % incomeColors.length])
+      borderColors.push('#67C23A')
+    })
+  
+  // 添加支出类别
+  Object.entries(expenseByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([category, amount], index) => {
+      labels.push(`${getCategoryName(category)}(支出)`)
+      data.push(amount)
+      colors.push(expenseColors[index % expenseColors.length])
+      borderColors.push('#F56C6C')
+    })
+  
+  return { labels, data, colors, borderColors }
+}
+
+// 获取最近6个月的数据
+const getLast6MonthsData = () => {
+  const months = []
+  const incomeData = []
+  const expenseData = []
+  
+  // 生成最近6个月的标签
+  for (let i = 5; i >= 0; i--) {
+    const date = dayjs().subtract(i, 'month')
+    months.push(date.format('M月'))
+    
+    const monthTransactions = dataStore.transactions.filter(t => {
+      return dayjs(t.date).format('YYYY-MM') === date.format('YYYY-MM')
+    })
+    
+    // 计算当月收入（所有交易收入，包括已同步的销售收入）
+    const totalIncome = monthTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0)
+    
+    // 计算当月支出
+    const totalExpense = monthTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0)
+    
+    incomeData.push(totalIncome)
+    expenseData.push(totalExpense)
   }
   
-  const options = {
+  return { months, incomeData, expenseData }
+}
+
+// 图表配置选项
+const getChartOptions = (type) => {
+  const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -310,25 +359,6 @@ const initChart = () => {
         intersect: false,
       }
     },
-    scales: {
-      x: {
-        display: true,
-        grid: {
-          display: false
-        }
-      },
-      y: {
-        display: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
-        },
-        ticks: {
-          callback: function(value) {
-            return '¥' + value.toLocaleString()
-          }
-        }
-      }
-    },
     interaction: {
       mode: 'nearest',
       axis: 'x',
@@ -336,17 +366,258 @@ const initChart = () => {
     }
   }
   
+  // 根据图表类型返回不同的配置
+  if (type === 'pie') {
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    return {
+      ...baseOptions,
+      scales: {
+        x: {
+          display: true,
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          display: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            callback: function(value) {
+              return '¥' + value.toLocaleString()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 初始化图表
+const initChart = () => {
+  if (!chartRef.value) return
+  
+  const ctx = chartRef.value.getContext('2d')
+  const { months, incomeData, expenseData } = getLast6MonthsData()
+  
+  // 使用真实数据
+  const data = {
+    labels: months,
+    datasets: [
+      {
+        label: '收入',
+        data: incomeData,
+        borderColor: '#67C23A',
+        backgroundColor: 'rgba(103, 194, 58, 0.1)',
+        tension: 0.4,
+        fill: true
+      },
+      {
+        label: '支出',
+        data: expenseData,
+        borderColor: '#F56C6C',
+        backgroundColor: 'rgba(245, 108, 108, 0.1)',
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  }
+  
+  // 初始化渲染图表
+  const options = getChartOptions(chartType.value)
+  
   chartInstance.value = new Chart(ctx, {
-    type: 'line',
+    type: chartType.value,
     data,
     options
   })
 }
 
+// 根据周期获取数据
+const getDataByPeriod = (period) => {
+  let periods = []
+  let incomeData = []
+  let expenseData = []
+  
+  if (period === 'month') {
+    // 最近4周，按周显示
+    for (let i = 3; i >= 0; i--) {
+      const startDate = dayjs().subtract((i + 1) * 7, 'day')
+      const endDate = dayjs().subtract(i * 7, 'day')
+      periods.push(`第${4-i}周`)
+      
+      const weekTransactions = dataStore.transactions.filter(t => {
+        const date = dayjs(t.date)
+        return date.isAfter(startDate) && date.isBefore(endDate)
+      })
+      
+      const totalIncome = weekTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+      const totalExpense = weekTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      
+      incomeData.push(totalIncome)
+      expenseData.push(totalExpense)
+    }
+  } else if (period === 'quarter') {
+    // 最近3个月
+    for (let i = 2; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'month')
+      periods.push(date.format('M月'))
+      
+      const monthTransactions = dataStore.transactions.filter(t => {
+        return dayjs(t.date).format('YYYY-MM') === date.format('YYYY-MM')
+      })
+      
+      const totalIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+      const totalExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      
+      incomeData.push(totalIncome)
+      expenseData.push(totalExpense)
+    }
+  } else if (period === 'year') {
+    // 年度数据，显示最近6个月
+    return getLast6MonthsData()
+  } else if (period === 'all') {
+    // 全周期数据，按月显示所有数据
+    const allTransactions = dataStore.transactions
+    const monthlyData = {}
+    
+    // 按月分组所有交易数据
+    allTransactions.forEach(t => {
+      const monthKey = dayjs(t.date).format('YYYY-MM')
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { income: 0, expense: 0 }
+      }
+      if (t.type === 'income') {
+        monthlyData[monthKey].income += t.amount
+      } else {
+        monthlyData[monthKey].expense += t.amount
+      }
+    })
+    
+    // 按时间排序并生成数据
+    const sortedMonths = Object.keys(monthlyData).sort()
+    sortedMonths.forEach(monthKey => {
+      periods.push(dayjs(monthKey).format('M月'))
+      incomeData.push(monthlyData[monthKey].income)
+      expenseData.push(monthlyData[monthKey].expense)
+    })
+  }
+  
+  return { months: periods, incomeData, expenseData }
+}
+
+// 渲染图表
+const renderChart = (data, type) => {
+  // 使用chartRef获取上下文
+  const chartContext = chartRef.value.getContext('2d')
+  const options = getChartOptions(type)
+  
+  // 销毁现有图表
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+  }
+  
+  // 根据图表类型处理数据
+  let chartData = data
+  if (type === 'pie') {
+    // 为饼图准备数据
+    const categoryData = getCategoryData()
+    
+    chartData = {
+      labels: categoryData.labels,
+      datasets: [{
+        data: categoryData.data,
+        backgroundColor: categoryData.colors,
+        borderColor: categoryData.borderColors,
+        borderWidth: 1
+      }]
+    }
+  }
+  
+  // 创建新图表
+  chartInstance.value = new Chart(chartContext, {
+    type: type === 'pie' ? 'pie' : type,
+    data: chartData,
+    options
+  })
+}
+
+// 切换图表类型
+const switchChartType = () => {
+  const { months, incomeData, expenseData } = getDataByPeriod(chartPeriod.value)
+  
+  const data = {
+    labels: months,
+    datasets: [
+      {
+        label: '收入',
+        data: incomeData,
+        borderColor: '#67C23A',
+        backgroundColor: type => type === 'line' ? 'rgba(103, 194, 58, 0.1)' : 'rgba(103, 194, 58, 0.7)',
+        tension: 0.4,
+        fill: chartType.value === 'line'
+      },
+      {
+        label: '支出',
+        data: expenseData,
+        borderColor: '#F56C6C',
+        backgroundColor: type => type === 'line' ? 'rgba(245, 108, 108, 0.1)' : 'rgba(245, 108, 108, 0.7)',
+        tension: 0.4,
+        fill: chartType.value === 'line'
+      }
+    ]
+  }
+  
+  renderChart(data, chartType.value)
+}
+
 // 更新图表
 const updateChart = () => {
-  // 这里可以根据 chartPeriod 的值更新图表数据
-  console.log('更新图表周期:', chartPeriod.value)
+  if (!chartInstance.value) return
+  
+  const { months, incomeData, expenseData } = getDataByPeriod(chartPeriod.value)
+  
+  const data = {
+    labels: months,
+    datasets: [
+      {
+        label: '收入',
+        data: incomeData,
+        borderColor: '#67C23A',
+        backgroundColor: chartType.value === 'line' ? 'rgba(103, 194, 58, 0.1)' : 'rgba(103, 194, 58, 0.7)',
+        tension: 0.4,
+        fill: chartType.value === 'line'
+      },
+      {
+        label: '支出',
+        data: expenseData,
+        borderColor: '#F56C6C',
+        backgroundColor: chartType.value === 'line' ? 'rgba(245, 108, 108, 0.1)' : 'rgba(245, 108, 108, 0.7)',
+        tension: 0.4,
+        fill: chartType.value === 'line'
+      }
+    ]
+  }
+  
+  renderChart(data, chartType.value)
 }
 
 // 处理交易添加成功
@@ -412,16 +683,32 @@ onMounted(async () => {
           background: linear-gradient(135deg, #67C23A, #85CE61);
         }
         
+        &.sales {
+          background: linear-gradient(135deg, #E6A23C, #EEBE77);
+        }
+        
+        &.inventory {
+          background: linear-gradient(135deg, #67C23A, #85CE61);
+        }
+        
+        &.logistics {
+          background: linear-gradient(135deg, #409EFF, #66B1FF);
+        }
+        
+        &.budget {
+          background: linear-gradient(135deg, #909399, #B1B3B8);
+        }
+        
         &.expense {
           background: linear-gradient(135deg, #F56C6C, #F78989);
         }
         
         &.assets {
-          background: linear-gradient(135deg, #409EFF, #66B1FF);
+          background: linear-gradient(135deg, #E6A23C, #EEBE77);
         }
         
         &.net {
-          background: linear-gradient(135deg, #E6A23C, #EBB563);
+          background: linear-gradient(135deg, #409EFF, #66B1FF);
         }
       }
       
@@ -438,7 +725,14 @@ onMounted(async () => {
         .stat-label {
           font-size: 14px;
           color: var(--el-text-color-regular);
+          margin-bottom: 4px;
+        }
+        
+        .stat-detail {
+          font-size: 12px;
+          color: #C0C4CC;
           margin-bottom: 8px;
+          line-height: 1.2;
         }
         
         .stat-change {
@@ -468,6 +762,18 @@ onMounted(async () => {
       .chart-container {
         height: 300px;
         position: relative;
+      }
+      
+      .card-header {
+        .chart-controls {
+          display: flex;
+          gap: 10px;
+          
+          .chart-type-selector,
+          .chart-period-selector {
+            margin-left: 10px;
+          }
+        }
       }
     }
     

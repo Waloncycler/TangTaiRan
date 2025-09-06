@@ -1,21 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
+import { useSalesStore } from './sales'
 
 export const useDataStore = defineStore('data', () => {
   // 交易数据
   const transactions = ref([
-    { id: 1, type: 'income', amount: 5000, category: 'salary', date: '2024-01-15', note: '工资收入' },
-    { id: 2, type: 'expense', amount: 1200, category: 'food', date: '2024-01-16', note: '餐饮支出' },
-    { id: 3, type: 'expense', amount: 800, category: 'transport', date: '2024-01-17', note: '交通费用' }
+    { id: 1, type: 'income', amount: 5000, category: 'salary', date: '2025-01-15', note: '工资收入' },
+    { id: 2, type: 'expense', amount: 1200, category: 'food', date: '2025-01-16', note: '餐饮支出' },
+    { id: 3, type: 'expense', amount: 800, category: 'transport', date: '2025-01-17', note: '交通费用' }
   ])
 
-  // 预算数据
-  const budgets = ref([
-    { id: 1, category: 'food', amount: 2000, spent: 1200 },
-    { id: 2, category: 'transport', amount: 1000, spent: 800 },
-    { id: 3, category: 'entertainment', amount: 500, spent: 200 }
-  ])
+
 
   // 物流数据
   const logistics = ref([
@@ -25,19 +21,25 @@ export const useDataStore = defineStore('data', () => {
 
   // 库存数据
   const inventory = ref([
-    { id: 1, name: '唐肽燃胶囊', quantity: 500, unit: '盒', location: 'A区-01', status: 'normal', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-15T10:30:00.000Z' },
-    { id: 2, name: '唐肽燃口服液', quantity: 8, unit: '瓶', location: 'B区-02', status: 'low', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-16T14:20:00.000Z' },
-    { id: 3, name: '唐肽燃片剂', quantity: 0, unit: '盒', location: 'C区-03', status: 'out', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-17T09:15:00.000Z' }
+    { id: 1, name: '勺子', quantity: 150, unit: '个', location: 'Bintulu', status: 'normal', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-15T10:30:00.000Z' },
+    { id: 2, name: '贴纸', quantity: 8, unit: '包', location: 'KL', status: 'low', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-16T14:20:00.000Z' },
+    { id: 3, name: '瓶子', quantity: 0, unit: '个', location: 'Bintulu', status: 'out', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-17T09:15:00.000Z' },
+    { id: 4, name: '唐肽燃', quantity: 200, unit: '盒', location: 'KL', status: 'normal', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-18T15:45:00.000Z' }
   ])
 
   // 库存变动日志
   const inventoryLogs = ref([
-    { id: 1, timestamp: '2024-01-15T10:30:00.000Z', productName: '唐肽燃胶囊', changeType: 'edit', oldQuantity: 520, newQuantity: 500, quantityChange: -20, operator: '系统管理员' },
-    { id: 2, timestamp: '2024-01-16T14:20:00.000Z', productName: '唐肽燃口服液', changeType: 'edit', oldQuantity: 15, newQuantity: 8, quantityChange: -7, operator: '系统管理员' }
+    { id: 1, timestamp: '2025-01-15T10:30:00.000Z', productName: '勺子', changeType: 'edit', oldQuantity: 170, newQuantity: 150, quantityChange: -20, operator: '系统管理员' },
+    { id: 2, timestamp: '2025-01-16T14:20:00.000Z', productName: '贴纸', changeType: 'edit', oldQuantity: 15, newQuantity: 8, quantityChange: -7, operator: '系统管理员' },
+    { id: 3, timestamp: '2025-01-17T09:15:00.000Z', productName: '瓶子', changeType: 'edit', oldQuantity: 5, newQuantity: 0, quantityChange: -5, operator: '系统管理员' },
+    { id: 4, timestamp: '2025-01-18T15:45:00.000Z', productName: '唐肽燃', changeType: 'add', oldQuantity: 0, newQuantity: 200, quantityChange: 200, operator: '系统管理员' }
   ])
 
   // 计算属性 - 财务概览
   const financialOverview = computed(() => {
+    // 获取销售数据
+    const salesStore = useSalesStore()
+    
     const currentMonth = dayjs().month()
     const currentYear = dayjs().year()
     
@@ -51,41 +53,50 @@ export const useDataStore = defineStore('data', () => {
       return date.month() === currentMonth - 1 && date.year() === currentYear
     })
     
-    const calculateTotals = (transactions) => {
-      const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+    // 计算销售数据
+    const currentMonthSales = Object.values(salesStore.salesRecords || {}).filter(sale => {
+      const date = dayjs(sale.saleDate)
+      return date.month() === currentMonth && date.year() === currentYear
+    })
+    
+    const previousMonthSales = Object.values(salesStore.salesRecords || {}).filter(sale => {
+      const date = dayjs(sale.saleDate)
+      return date.month() === currentMonth - 1 && date.year() === currentYear
+    })
+    
+    const calculateTotals = (transactions, sales = []) => {
+      const transactionIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+      const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0)
       const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
-      const net = income - expense
-      return { income, expense, net }
+      const totalIncome = transactionIncome + salesRevenue
+      const net = totalIncome - expense
+      return { transactionIncome, salesRevenue, totalIncome, expense, net }
     }
     
-    const current = calculateTotals(currentMonthTransactions)
-    const previous = calculateTotals(previousMonthTransactions)
+    const current = calculateTotals(currentMonthTransactions, currentMonthSales)
+    const previous = calculateTotals(previousMonthTransactions, previousMonthSales)
+    
+    // 计算总资产（历史累积净收入）
+    const allTransactions = transactions.value
+    const allSales = Object.values(salesStore.salesRecords || {})
+    const allTotals = calculateTotals(allTransactions, allSales)
     
     return {
-      totalAssets: current.income,
+      totalAssets: allTotals.net > 0 ? allTotals.net : 0,
       totalExpenses: current.expense,
-      totalIncome: current.income,
+      totalIncome: current.totalIncome,
+      salesRevenue: current.salesRevenue,
+      otherIncome: current.transactionIncome,
       netIncome: current.net,
-      assetChange: previous.income !== 0 ? ((current.income - previous.income) / previous.income * 100).toFixed(1) : '0.0',
+      salesCount: currentMonthSales.length,
+      assetChange: previous.totalIncome !== 0 ? ((current.totalIncome - previous.totalIncome) / previous.totalIncome * 100).toFixed(1) : '0.0',
       expenseChange: previous.expense !== 0 ? ((current.expense - previous.expense) / previous.expense * 100).toFixed(1) : '0.0',
-      incomeChange: previous.income !== 0 ? ((current.income - previous.income) / previous.income * 100).toFixed(1) : '0.0'
+      incomeChange: previous.totalIncome !== 0 ? ((current.totalIncome - previous.totalIncome) / previous.totalIncome * 100).toFixed(1) : '0.0',
+      salesChange: previous.salesRevenue !== 0 ? ((current.salesRevenue - previous.salesRevenue) / previous.salesRevenue * 100).toFixed(1) : '0.0'
     }
   })
 
-  // 计算属性 - 预算概览
-  const budgetOverview = computed(() => {
-    const totalBudget = budgets.value.reduce((sum, b) => sum + b.amount, 0)
-    const totalSpent = budgets.value.reduce((sum, b) => sum + b.spent, 0)
-    const remaining = totalBudget - totalSpent
-    const percentage = totalBudget > 0 ? (totalSpent / totalBudget * 100).toFixed(1) : 0
-    
-    return {
-      totalBudget,
-      totalSpent,
-      remaining,
-      percentage: parseFloat(percentage)
-    }
-  })
+
 
   // 计算属性 - 库存统计
   const inventoryStats = computed(() => {
@@ -130,34 +141,7 @@ export const useDataStore = defineStore('data', () => {
     return false
   }
 
-  // 预算相关方法
-  const addBudget = (budget) => {
-    const newBudget = {
-      id: Date.now(),
-      ...budget,
-      spent: 0
-    }
-    budgets.value.push(newBudget)
-    return newBudget
-  }
 
-  const updateBudget = (id, updates) => {
-    const index = budgets.value.findIndex(b => b.id === id)
-    if (index !== -1) {
-      budgets.value[index] = { ...budgets.value[index], ...updates }
-      return budgets.value[index]
-    }
-    return null
-  }
-
-  const deleteBudget = (id) => {
-    const index = budgets.value.findIndex(b => b.id === id)
-    if (index !== -1) {
-      budgets.value.splice(index, 1)
-      return true
-    }
-    return false
-  }
 
   // 库存相关方法
   const checkInventoryStatus = (quantity) => {
@@ -286,23 +270,18 @@ export const useDataStore = defineStore('data', () => {
   return {
     // 数据
     transactions,
-    budgets,
     logistics,
     inventory,
     inventoryLogs,
     
     // 计算属性
     financialOverview,
-    budgetOverview,
     inventoryStats,
     
     // 方法
     addTransaction,
     updateTransaction,
     deleteTransaction,
-    addBudget,
-    updateBudget,
-    deleteBudget,
     addInventory,
     updateInventory,
     deleteInventory,
