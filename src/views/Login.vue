@@ -67,8 +67,9 @@
             show-icon
           >
             <template #default>
-              <p>用户名: <strong>admin</strong></p>
-              <p>密码: <strong>admin123</strong></p>
+              <p>管理员账号: <strong>admin</strong> / 密码: <strong>admin123</strong></p>
+              <p>代理账号: <strong>agent001</strong> / 密码: <strong>agent123</strong></p>
+              <p>代理账号: <strong>agent002</strong> / 密码: <strong>agent123</strong></p>
             </template>
           </el-alert>
         </div>
@@ -109,8 +110,8 @@ const loginRules = {
     { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+    { required: true, message: '请输入密码', trigger: 'blur' }
+    // 移除密码长度限制，因为示例密码可能不符合长度要求
   ]
 }
 
@@ -124,10 +125,14 @@ const handleLogin = async () => {
     
     loading.value = true
     
+    console.log('尝试登录:', loginForm.username, loginForm.password)
     const success = await authStore.login(loginForm.username, loginForm.password)
     
     if (success) {
+      ElMessage.success(`欢迎回来，${authStore.userInfo.username}`)
       router.push('/dashboard')
+    } else {
+      // 登录失败的具体提示已在auth.js中处理
     }
   } catch (error) {
     console.error('登录失败:', error)
@@ -213,6 +218,20 @@ const handleLogin = async () => {
     color: #7f8c8d;
     margin: 0;
   }
+}
+
+.login-tips {
+  background-color: #f0f9eb;
+  border: 1px solid #e1f3d8;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #67c23a;
+}
+
+.login-tips p {
+  margin: 5px 0;
 }
 
 .login-form {

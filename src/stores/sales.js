@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { useDataStore } from './data'
+import { useAuthStore } from './auth'
 
 export const useSalesStore = defineStore('sales', {
   state: () => ({
@@ -118,6 +119,55 @@ export const useSalesStore = defineStore('sales', {
   }),
   
   getters: {
+    // 根据当前用户权限过滤代理列表
+    filteredAgents() {
+      const authStore = useAuthStore()
+      
+      // 如果未登录，返回空对象
+      if (!authStore.isLoggedIn) return {}
+      
+      // 管理员可以看到所有代理
+      if (authStore.userInfo.role === 'admin') {
+        return this.agents
+      }
+      
+      // 获取当前用户可访问的代理ID列表
+      const accessibleAgentIds = authStore.getAccessibleAgentIds()
+      
+      // 过滤出可访问的代理
+      const result = {}
+      accessibleAgentIds.forEach(agentId => {
+        if (this.agents[agentId]) {
+          result[agentId] = this.agents[agentId]
+        }
+      })
+      
+      return result
+    },
+    
+    // 根据当前用户权限过滤销售记录
+    filteredSalesRecords() {
+      const authStore = useAuthStore()
+      
+      // 如果未登录，返回空对象
+      if (!authStore.isLoggedIn) return {}
+      
+      // 管理员可以看到所有销售记录
+      if (authStore.userInfo.role === 'admin') {
+        return this.salesRecords
+      }
+      
+      // 获取当前用户可访问的代理ID列表
+      const accessibleAgentIds = authStore.getAccessibleAgentIds()
+      
+      // 过滤出可访问的销售记录
+      return Object.values(this.salesRecords)
+        .filter(record => accessibleAgentIds.includes(record.agentId))
+        .reduce((acc, record) => {
+          acc[record.id] = record
+          return acc
+        }, {})
+    },
     // 获取代理层级名称
     getAgentLevelName: () => (level) => {
       const levelNames = {
@@ -136,8 +186,32 @@ export const useSalesStore = defineStore('sales', {
     
     // 获取代理的团队结构树
     getTeamTree: (state) => {
-      const buildTree = (parentId = null) => {
-        return Object.values(state.agents)
+      const authStore = useAuthStore()
+      
+      // 获取过滤后的代理
+      let agentsToUse = state.agents
+      
+      // 如果不是管理员，使用过滤后的数据
+      if (authStore.isLoggedIn && authStore.userInfo.role !== 'admin') {
+        const accessibleAgentIds = authStore.getAccessibleAgentIds()
+        agentsToUse = accessibleAgentIds.reduce((acc, agentId) => {
+          if (state.agents[agentId]) {
+            acc[agentId] = state.agents[agentId]
+          }
+          return acc
+        }, {})
+      }
+      
+      // 找出所有顶级代理（没有上级的代理）或当前用户的代理（如果是代理登录）
+      let rootId = null
+      
+      if (authStore.isLoggedIn && authStore.userInfo.agentId) {
+        // 如果是代理登录，只显示自己为根节点的树
+        rootId = authStore.userInfo.agentId
+      }
+      
+      const buildTree = (parentId = rootId) => {
+        return Object.values(agentsToUse)
           .filter(agent => agent.parentId === parentId)
           .map(agent => ({
             ...agent,
@@ -178,8 +252,32 @@ export const useSalesStore = defineStore('sales', {
     
     // 获取销售排行榜
     getSalesRanking: (state) => {
-      const agentStats = Object.values(state.agents).map(agent => {
-        const sales = Object.values(state.salesRecords).filter(sale => sale.agentId === agent.id)
+      const authStore = useAuthStore()
+      
+      // 获取过滤后的销售记录
+      let salesRecordsToUse = state.salesRecords
+      let agentsToUse = state.agents
+      
+      // 如果不是管理员，使用过滤后的数据
+      if (authStore.isLoggedIn && authStore.userInfo.role !== 'admin') {
+        const accessibleAgentIds = authStore.getAccessibleAgentIds()
+        salesRecordsToUse = Object.values(state.salesRecords)
+          .filter(record => accessibleAgentIds.includes(record.agentId))
+          .reduce((acc, record) => {
+            acc[record.id] = record
+            return acc
+          }, {})
+          
+        agentsToUse = accessibleAgentIds.reduce((acc, agentId) => {
+          if (state.agents[agentId]) {
+            acc[agentId] = state.agents[agentId]
+          }
+          return acc
+        }, {})
+      }
+      
+      const agentStats = Object.values(agentsToUse).map(agent => {
+        const sales = Object.values(salesRecordsToUse).filter(sale => sale.agentId === agent.id)
         return {
           ...agent,
           salesCount: sales.length,
@@ -243,6 +341,30 @@ export const useSalesStore = defineStore('sales', {
       this.agents[id] = agent
       ElMessage.success('代理添加成功')
       return id
+    },
+    
+    // 获取代理层级关系（当前代理及其所有下属代理）
+    getAgentHierarchy(agentId) {
+      if (!this.agents[agentId]) return []
+      
+      // 递归获取所有下属代理
+      const getAllSubordinates = (id) => {
+        let result = [id]
+        
+        // 查找直接下属
+        const directSubordinates = Object.values(this.agents)
+          .filter(agent => agent.parentId === id)
+          .map(agent => agent.id)
+        
+        // 递归获取每个直接下属的下属
+        directSubordinates.forEach(subId => {
+          result = result.concat(getAllSubordinates(subId))
+        })
+        
+        return result
+      }
+      
+      return getAllSubordinates(agentId)
     },
     
     // 更新代理信息

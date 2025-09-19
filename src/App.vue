@@ -13,6 +13,7 @@ const authStore = useAuthStore()
 onMounted(() => {
   // 检查本地存储的登录状态
   authStore.checkLoginStatus()
+  console.log('应用启动，登录状态:', authStore.isLoggedIn, '用户信息:', authStore.userInfo)
 })
 </script>
 

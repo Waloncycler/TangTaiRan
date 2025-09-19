@@ -11,7 +11,10 @@
         />
         <h1 class="logo">唐肽燃管理系统</h1>
         <el-dropdown @command="handleCommand">
-          <el-button type="primary" :icon="User" circle />
+          <div class="user-info-mobile">
+            <el-button type="primary" :icon="User" circle />
+            <span class="user-role-mobile">{{ authStore.getRoleName(authStore.userInfo.role) }}</span>
+          </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="logout">
@@ -88,6 +91,7 @@
               <div class="user-info">
                 <el-avatar :size="32" :icon="UserFilled" />
                 <span class="username">{{ authStore.userInfo.username }}</span>
+                <span class="user-role">{{ authStore.getRoleName(authStore.userInfo.role) }}</span>
                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
               </div>
               <template #dropdown>
@@ -248,6 +252,22 @@ onUnmounted(() => {
         background: rgba(255, 255, 255, 0.1);
       }
     }
+    
+    .user-info-mobile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .user-role-mobile {
+        color: white;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+    }
   }
 }
 
@@ -366,23 +386,31 @@ onUnmounted(() => {
     
     .header-right {
       .user-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        padding: 8px 12px;
-        border-radius: 6px;
-        transition: background-color 0.3s;
-        
-        &:hover {
-          background-color: var(--el-fill-color-light);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          padding: 8px 12px;
+          border-radius: 6px;
+          transition: background-color 0.3s;
+          
+          &:hover {
+            background-color: var(--el-fill-color-light);
+          }
+          
+          .username {
+            font-size: 14px;
+            color: var(--el-text-color-primary);
+          }
+          
+          .user-role {
+            background-color: #f0f9eb;
+            color: #67c23a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+          }
         }
-        
-        .username {
-          font-size: 14px;
-          color: var(--el-text-color-primary);
-        }
-      }
     }
   }
 }

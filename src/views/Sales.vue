@@ -464,6 +464,7 @@ const agentRules = {
 const salesStatistics = computed(() => salesStore.getSalesStatistics)
 const teamTree = computed(() => salesStore.getTeamTree)
 const salesRanking = computed(() => salesStore.getSalesRanking)
+const agentList = computed(() => Object.values(salesStore.filteredAgents))
 
 const sortedRanking = computed(() => {
   return [...salesRanking.value].sort((a, b) => {
@@ -476,7 +477,7 @@ const sortedRanking = computed(() => {
 })
 
 const filteredSalesRecords = computed(() => {
-  let records = Object.values(salesStore.salesRecords)
+  let records = Object.values(salesStore.filteredSalesRecords)
   
   // 搜索过滤
   if (searchKeyword.value) {
