@@ -358,7 +358,10 @@ const exportData = () => {
 
 // 初始化数据
 onMounted(async () => {
-  await dataStore.fetchTransactions()
+  // 只在数据未初始化时才获取数据，避免重复请求
+  if (!dataStore.initialized) {
+    await dataStore.fetchTransactions()
+  }
 })
 </script>
 

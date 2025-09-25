@@ -832,7 +832,10 @@ const exportData = () => {
 
 // 生命周期
 onMounted(async () => {
-  await salesStore.initialize()
+  // 只在数据未初始化时才初始化，避免重复请求
+  if (!salesStore.initialized) {
+    await salesStore.initialize()
+  }
 })
 
 // 监听分页变化

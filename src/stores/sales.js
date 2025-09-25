@@ -36,7 +36,11 @@ export const useSalesStore = defineStore('sales', {
       city: '',
       agentLevel: '',
       status: 'all'
-    }
+    },
+
+    // 初始化状态
+    initialized: false,
+    initializing: false
   }),
   
   getters: {
@@ -582,24 +586,44 @@ export const useSalesStore = defineStore('sales', {
       await this.fetchSales()
     },
     
-    // 初始化数据
-    async initialize() {
+    // 初始化数据（带去重保护）
+    async initialize(force = false) {
+      // 如果已经初始化且不是强制刷新，直接返回
+      if (this.initialized && !force) {
+        console.log('销售数据已初始化，跳过重复初始化')
+        return
+      }
+
+      // 如果正在初始化，等待完成
+      if (this.initializing) {
+        console.log('销售数据正在初始化中，等待完成')
+        while (this.initializing) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        return
+      }
+
       try {
+        this.initializing = true
         console.log('开始初始化销售数据...')
         
-        // 加载代理数据
-        await this.fetchAgents({forceRefresh: true})
+        // 加载代理数据（不强制刷新，除非明确要求）
+        await this.fetchAgents({ forceRefresh: force })
         console.log('代理数据加载完成:', Object.keys(this.agents).length)
         
-        // 加载销售记录
-        await this.fetchSales({forceRefresh: true})
+        // 加载销售记录（不强制刷新，除非明确要求）
+        await this.fetchSales({ forceRefresh: force })
         console.log('销售记录加载完成:', Object.keys(this.salesRecords).length)
         
         // 同步销售记录到账单管理
         await this.initializeSalesSync()
         console.log('销售记录同步完成')
+        
+        this.initialized = true
       } catch (error) {
         console.error('初始化数据失败:', error)
+      } finally {
+        this.initializing = false
       }
     },
     

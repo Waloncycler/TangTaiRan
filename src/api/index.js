@@ -16,6 +16,9 @@ const api = axios.create({
 // 存储当前token
 let currentToken = null;
 
+// 请求去重映射表
+const pendingRequests = new Map();
+
 // 设置认证令牌
 const setAuthToken = (token) => {
   currentToken = token;
@@ -26,7 +29,13 @@ const clearAuthToken = () => {
   currentToken = null;
 };
 
-// 请求拦截器 - 添加token和时间戳
+// 生成请求唯一标识
+const generateRequestKey = (config) => {
+  const { method, url, params, data } = config;
+  return `${method}:${url}:${JSON.stringify(params)}:${JSON.stringify(data)}`;
+};
+
+// 请求拦截器 - 添加token、去重和智能缓存控制
 api.interceptors.request.use(config => {
   // 优先使用内存中的token，其次从sessionStorage获取
   const token = currentToken || sessionStorage.getItem('token');
@@ -34,16 +43,34 @@ api.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  // 添加时间戳参数，防止缓存
-  const timestamp = new Date().getTime();
+  // 生成请求唯一标识
+  const requestKey = generateRequestKey(config);
   
-  // 处理GET请求，添加时间戳参数
-  if (config.method === 'get') {
-    config.params = {
-      ...config.params,
-      _t: timestamp
-    };
+  // 检查是否有相同的请求正在进行
+  if (pendingRequests.has(requestKey)) {
+    console.log('检测到重复请求，使用缓存结果:', requestKey);
+    return pendingRequests.get(requestKey);
   }
+  
+  // 对于GET请求，只在强制刷新时添加时间戳
+  if (config.method === 'get') {
+    // 检查是否需要强制刷新
+    const forceRefresh = config.params?._force || config.params?.forceRefresh;
+    if (forceRefresh) {
+      config.params = {
+        ...config.params,
+        _t: new Date().getTime()
+      };
+    }
+    // 移除内部标识参数
+    if (config.params?._force) {
+      delete config.params._force;
+    }
+  }
+  
+  // 将请求添加到待处理映射表
+  const requestPromise = Promise.resolve(config);
+  pendingRequests.set(requestKey, requestPromise);
   
   return config;
 }, error => {
@@ -51,12 +78,30 @@ api.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-// 响应拦截器 - 处理错误
+// 响应拦截器 - 处理错误和清理请求缓存
 api.interceptors.response.use(
-  response => response.data,
+  response => {
+    // 清理已完成的请求
+    const requestKey = generateRequestKey(response.config);
+    pendingRequests.delete(requestKey);
+    
+    return response.data;
+  },
   error => {
+    // 清理失败的请求
+    if (error.config) {
+      const requestKey = generateRequestKey(error.config);
+      pendingRequests.delete(requestKey);
+    }
+    
     // 处理错误响应
     const errorMessage = error.response?.data?.message || '请求失败，请稍后重试';
+    
+    // 对于429错误，给出更友好的提示
+    if (error.response && error.response.status === 429) {
+      ElMessage.warning('请求过于频繁，请稍后再试');
+      return Promise.reject(error);
+    }
     
     // 显示错误消息
     ElMessage.error(errorMessage);

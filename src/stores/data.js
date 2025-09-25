@@ -29,11 +29,44 @@ export const useDataStore = defineStore('data', () => {
     inventory: null
   })
 
-  // 初始化方法 - 加载所有数据
-  async function initialize() {
-    await fetchTransactions()
-    await fetchLogistics()
-    await fetchInventory()
+  // 初始化状态跟踪
+  const initialized = ref(false)
+  const initializing = ref(false)
+
+  // 初始化方法 - 加载所有数据（带去重保护）
+  async function initialize(force = false) {
+    // 如果已经初始化且不是强制刷新，直接返回
+    if (initialized.value && !force) {
+      console.log('数据已初始化，跳过重复初始化')
+      return
+    }
+
+    // 如果正在初始化，等待完成
+    if (initializing.value) {
+      console.log('数据正在初始化中，等待完成')
+      while (initializing.value) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      return
+    }
+
+    try {
+      initializing.value = true
+      console.log('开始初始化数据存储...')
+      
+      await Promise.all([
+        fetchTransactions(),
+        fetchLogistics(),
+        fetchInventory()
+      ])
+      
+      initialized.value = true
+      console.log('数据存储初始化完成')
+    } catch (error) {
+      console.error('数据存储初始化失败:', error)
+    } finally {
+      initializing.value = false
+    }
   }
   
   // 获取交易数据
@@ -506,6 +539,12 @@ export const useDataStore = defineStore('data', () => {
     transactions,
     logistics,
     inventory,
+    
+    // 状态
+    initialized,
+    initializing,
+    loading,
+    error,
     
     // 计算属性
     financialOverview,

@@ -416,7 +416,10 @@ const exportData = () => {
 
 // 组件挂载时获取库存数据
 onMounted(async () => {
-  await dataStore.fetchInventory()
+  // 只在数据未初始化时才获取数据，避免重复请求
+  if (!dataStore.initialized) {
+    await dataStore.fetchInventory()
+  }
 })
 </script>
 

@@ -30,34 +30,70 @@ app.use(cors()); // 跨域资源共享
 app.use(express.json()); // 解析JSON请求体
 app.use(morgan('dev')); // 请求日志
 
-// 速率限制
+// 速率限制配置
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 每个IP限制100个请求
+  max: 200, // 每个IP限制200个请求（提高限制）
   standardHeaders: true,
   legacyHeaders: false,
+  message: { 
+    success: false, 
+    message: '请求过于频繁，请稍后再试',
+    retryAfter: '15分钟'
+  },
+  // 跳过成功的请求计数（只计算失败的请求）
+  skipSuccessfulRequests: false,
+  // 跳过失败的请求计数
+  skipFailedRequests: false,
 });
 
 // 登录路由的特殊限流配置
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
-  max: 500, // 每个IP限制500个登录请求
+  max: 10, // 每个IP限制10个登录请求（降低限制，防止暴力破解）
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: '登录尝试次数过多，请稍后再试' }
+  message: { 
+    success: false, 
+    message: '登录尝试次数过多，请稍后再试',
+    retryAfter: '15分钟'
+  }
 });
 
-// 为其他API路由应用通用限流（除了登录路由）
-app.use('/api', (req, res, next) => {
-  // 如果是登录路由，跳过通用限流
-  if (req.path === '/auth/login') {
-    return next();
+// 数据获取路由的宽松限流配置
+const dataLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5分钟
+  max: 100, // 每个IP限制100个数据请求
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    success: false, 
+    message: '数据请求过于频繁，请稍后再试',
+    retryAfter: '5分钟'
   }
+});
+
+// 智能限流中间件
+app.use('/api', (req, res, next) => {
+  // 登录路由使用严格限流
+  if (req.path === '/auth/login') {
+    return loginLimiter(req, res, next);
+  }
+  
+  // 数据获取路由使用宽松限流
+  if (req.method === 'GET' && (
+    req.path.startsWith('/transactions') ||
+    req.path.startsWith('/inventory') ||
+    req.path.startsWith('/logistics') ||
+    req.path.startsWith('/sales') ||
+    req.path.startsWith('/agents')
+  )) {
+    return dataLimiter(req, res, next);
+  }
+  
+  // 其他API使用通用限流
   apiLimiter(req, res, next);
 });
-
-// 为登录路由单独应用限流
-app.use('/api/auth/login', loginLimiter);
 
 // 路由
 app.use('/api/auth', authRoutes);
