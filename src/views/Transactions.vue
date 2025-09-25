@@ -128,7 +128,7 @@
         </el-table-column>
         <el-table-column prop="category" label="分类" width="120">
           <template #default="{ row }">
-            {{ getCategoryName(row.category) }}
+            {{ getCategoryName(row.category, row.type) }}
           </template>
         </el-table-column>
         <el-table-column prop="amount" label="金额" width="120" sortable>
@@ -206,20 +206,16 @@ const filters = reactive({
 const allCategories = computed(() => {
   const categories = [
     // 收入分类
-    { value: 'salary', label: '工资' },
-    { value: 'bonus', label: '奖金' },
-    { value: 'investment', label: '投资收益' },
-    { value: 'freelance', label: '自由职业' },
-    { value: 'rental', label: '租金收入' },
+    { value: 'self_employed', label: '自营' },
+    { value: 'online_store', label: '网店' },
+    { value: 'live_streaming', label: '直播' },
+    { value: 'agency', label: '代理' },
+    { value: 'other', label: '其它' },
     // 支出分类
-    { value: 'food', label: '餐饮' },
-    { value: 'transport', label: '交通' },
-    { value: 'entertainment', label: '娱乐' },
-    { value: 'shopping', label: '购物' },
-    { value: 'utilities', label: '水电费' },
-    { value: 'healthcare', label: '医疗' },
-    { value: 'education', label: '教育' },
-    { value: 'other', label: '其他' }
+    { value: 'purchase', label: '进货' },
+    { value: 'salary', label: '员工工资' },
+    { value: 'rent_utilities', label: '房租水电' },
+    { value: 'other', label: '其它支出' }
   ]
   return categories
 })
@@ -233,7 +229,7 @@ const filteredTransactions = computed(() => {
     const search = searchText.value.toLowerCase()
     result = result.filter(t => 
       t.note.toLowerCase().includes(search) ||
-      getCategoryName(t.category).toLowerCase().includes(search)
+      getCategoryName(t.category, t.type).toLowerCase().includes(search)
     )
   }
   
@@ -291,23 +287,32 @@ const formatCurrency = (amount) => {
 }
 
 // 获取分类名称
-const getCategoryName = (category) => {
-  const categoryMap = {
-    'food': '餐饮',
-    'transport': '交通',
-    'entertainment': '娱乐',
-    'shopping': '购物',
-    'utilities': '水电费',
-    'healthcare': '医疗',
-    'education': '教育',
-    'other': '其他',
-    'salary': '工资',
-    'bonus': '奖金',
-    'investment': '投资收益',
-    'freelance': '自由职业',
-    'rental': '租金收入'
+const getCategoryName = (category, type = null) => {
+  // 收入分类
+  const incomeCategories = {
+    'self_employed': '自营',  
+    'online_store': '网店',
+    'live_streaming': '直播',
+    'agency': '代理'
   }
-  return categoryMap[category] || category
+  
+  // 支出分类
+  const expenseCategories = {
+    'purchase': '进货',
+    'salary': '员工工资',
+    'rent_utilities': '房租水电',
+    'other': '其它支出'
+  }
+  
+  // 如果指定了类型，使用对应的分类映射
+  if (type === 'income') {
+    return incomeCategories[category] || category
+  } else if (type === 'expense') {
+    return expenseCategories[category] || category
+  }
+  
+  // 兼容旧版本，先尝试收入分类，再尝试支出分类
+  return incomeCategories[category] || expenseCategories[category] || category
 }
 
 // 重置筛选条件

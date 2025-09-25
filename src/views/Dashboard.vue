@@ -87,28 +87,87 @@
 
     <!-- 业务分析图表 -->
     <el-row :gutter="20" class="charts-row">
-      <el-col :span="24">
+      <!-- 收入支出趋势图 -->
+      <el-col :xs="24" :lg="16">
         <el-card class="chart-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span class="card-title">业务分析</span>
-              <div class="chart-controls">
-                <el-radio-group v-model="chartType" size="small" @change="switchChartType" class="chart-type-selector">
-                  <el-radio-button label="line">趋势图</el-radio-button>
-                  <el-radio-button label="bar">对比图</el-radio-button>
-                  <el-radio-button label="pie">分布图</el-radio-button>
-                </el-radio-group>
-                <el-radio-group v-model="chartPeriod" size="small" @change="updateChart" class="chart-period-selector" v-if="chartType !== 'pie'">
-                  <el-radio-button label="month">本月</el-radio-button>
-                  <el-radio-button label="quarter">本季度</el-radio-button>
-                  <el-radio-button label="year">本年</el-radio-button>
-                  <el-radio-button label="all">全周期</el-radio-button>
-                </el-radio-group>
-              </div>
+              <span class="card-title">收入支出趋势</span>
+              <span class="card-subtitle">最近6个月数据对比</span>
             </div>
           </template>
           <div class="chart-container">
-            <canvas ref="chartRef" width="400" height="200"></canvas>
+            <canvas ref="trendChartRef" width="400" height="200"></canvas>
+          </div>
+        </el-card>
+      </el-col>
+      
+      <!-- 收入分类分布 -->
+      <el-col :xs="24" :lg="8">
+        <el-card class="chart-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">收入分类</span>
+              <span class="card-subtitle">按来源分布</span>
+            </div>
+          </template>
+          <div class="chart-container">
+            <canvas ref="incomeChartRef" width="300" height="300"></canvas>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20" class="charts-row">
+      <!-- 支出分类分布 -->
+      <el-col :xs="24" :lg="8">
+        <el-card class="chart-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">支出分类</span>
+              <span class="card-subtitle">按类型分布</span>
+            </div>
+          </template>
+          <div class="chart-container">
+            <canvas ref="expenseChartRef" width="300" height="300"></canvas>
+          </div>
+        </el-card>
+      </el-col>
+      
+      <!-- 财务概览 -->
+      <el-col :xs="24" :lg="16">
+        <el-card class="chart-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">财务概览</span>
+              <span class="card-subtitle">{{ getPeriodLabel() }}数据汇总</span>
+            </div>
+          </template>
+          <div class="financial-overview">
+            <div class="overview-item">
+              <div class="overview-label">净收益</div>
+              <div class="overview-value" :class="periodFinancialData.totalIncome - periodFinancialData.totalExpenses >= 0 ? 'positive' : 'negative'">
+                {{ formatCurrency(periodFinancialData.totalIncome - periodFinancialData.totalExpenses) }}
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="overview-label">收支比</div>
+              <div class="overview-value">
+                {{ periodFinancialData.totalExpenses > 0 ? (periodFinancialData.totalIncome / periodFinancialData.totalExpenses).toFixed(2) : '∞' }}
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="overview-label">平均日收入</div>
+              <div class="overview-value">
+                {{ formatCurrency(periodFinancialData.totalIncome / 30) }}
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="overview-label">平均日支出</div>
+              <div class="overview-value">
+                {{ formatCurrency(periodFinancialData.totalExpenses / 30) }}
+              </div>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -129,28 +188,32 @@
           </div>
         </div>
       </template>
-      <el-table :data="recentTransactions" style="width: 100%" stripe>
-        <el-table-column prop="date" label="日期" width="120" />
-        <el-table-column prop="category" label="分类" width="120">
+      <el-table :data="recentTransactions" style="width: 100%; padding-left: 0; margin-left: 0;" stripe>
+        <el-table-column label="日期" width="300">
           <template #default="{ row }">
-            {{ getCategoryName(row.category) }}
+            {{ formatDate(row.date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="type" label="类型" width="80">
+        <el-table-column prop="category" label="分类" width="300">
+          <template #default="{ row }">
+            {{ getCategoryName(row.category, row.type) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="type" label="类型" width="300">
           <template #default="{ row }">
             <el-tag :type="row.type === 'income' ? 'success' : 'danger'" size="small">
               {{ row.type === 'income' ? '收入' : '支出' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="amount" label="金额" width="120">
+        <el-table-column prop="amount" label="金额" width="300">
           <template #default="{ row }">
             <span :class="row.type === 'income' ? 'amount-income' : 'amount-expense'">
               {{ formatCurrency(row.amount) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="note" label="备注" show-overflow-tooltip />
+        <el-table-column prop="note" label="备注" min-width="300" show-overflow-tooltip />
       </el-table>
     </el-card>
 
@@ -195,6 +258,16 @@ const chartRef = ref()
 const chartInstance = ref(null)
 const chartType = ref('line')
 const chartPeriod = ref('year')
+
+// 图表引用
+const trendChartRef = ref()
+const incomeChartRef = ref()
+const expenseChartRef = ref()
+
+// 图表实例
+const trendChartInstance = ref(null)
+const incomeChartInstance = ref(null)
+const expenseChartInstance = ref(null)
 
 // 导航到指定路由
 const navigateTo = (path) => {
@@ -265,9 +338,53 @@ const periodFinancialData = computed(() => {
     .filter(t => t.type === 'income' && t.category === 'sales')
     .length;
   
-  // 计算同比变化（简化计算，实际应用中可能需要更复杂的逻辑）
-  incomeChange = 5.2;  // 示例值
-  expenseChange = 3.8;  // 示例值
+  // 计算同比变化率（与上一个相同周期比较）
+  let previousPeriodTransactions = [];
+  
+  if (currentPeriod === 'month') {
+    // 上个月的数据
+    previousPeriodTransactions = transactions.filter(t => {
+      const transactionDate = dayjs(t.date);
+      return transactionDate.isAfter(dayjs().subtract(2, 'month')) && 
+             transactionDate.isBefore(dayjs().subtract(1, 'month'));
+    });
+  } else if (currentPeriod === 'quarter') {
+    // 上个季度的数据
+    previousPeriodTransactions = transactions.filter(t => {
+      const transactionDate = dayjs(t.date);
+      return transactionDate.isAfter(dayjs().subtract(6, 'month')) && 
+             transactionDate.isBefore(dayjs().subtract(3, 'month'));
+    });
+  } else if (currentPeriod === 'year') {
+    // 去年同期的数据
+    previousPeriodTransactions = transactions.filter(t => {
+      const transactionDate = dayjs(t.date);
+      return transactionDate.isAfter(dayjs().subtract(2, 'year')) && 
+             transactionDate.isBefore(dayjs().subtract(1, 'year'));
+    });
+  } else {
+    // 全部周期时，比较前半年和后半年
+    const halfPoint = Math.floor(transactions.length / 2);
+    previousPeriodTransactions = transactions.slice(0, halfPoint);
+  }
+  
+  // 计算上一周期的收入和支出
+  const previousIncome = previousPeriodTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+    
+  const previousExpenses = previousPeriodTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  // 计算变化率
+  incomeChange = previousIncome > 0 ? 
+    ((totalIncome - previousIncome) / previousIncome) * 100 : 
+    (totalIncome > 0 ? 100 : 0);
+    
+  expenseChange = previousExpenses > 0 ? 
+    ((totalExpenses - previousExpenses) / previousExpenses) * 100 : 
+    (totalExpenses > 0 ? 100 : 0);
   
   return {
     totalIncome,
@@ -300,24 +417,41 @@ const formatCurrency = (amount) => {
   }).format(amount || 0)
 }
 
+// 格式化日期为年月日
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 // 获取分类名称
-const getCategoryName = (category) => {
-  const categoryNames = {
-    'food': '餐饮',
-    'transport': '交通',
-    'entertainment': '娱乐',
-    'shopping': '购物',
-    'utilities': '水电费',
-    'healthcare': '医疗',
-    'education': '教育',
-    'other': '其他',
-    'salary': '工资',
-    'bonus': '奖金',
-    'investment': '投资收益',
-    'freelance': '自由职业',
-    'rental': '租金收入'
+const getCategoryName = (category, type = null) => {
+  // 收入分类
+  const incomeCategories = {
+    'self_employed': '自营',  
+    'online_store': '网店',
+    'live_streaming': '直播',
+    'agency': '代理',
+    'other': '其它'
   }
-  return categoryNames[category] || category
+  
+  // 支出分类
+  const expenseCategories = {
+    'purchase': '进货',
+    'salary': '员工工资',
+    'rent_utilities': '房租水电',
+    'other': '其它支出'
+  }
+  
+  // 如果指定了类型，使用对应的分类映射
+  if (type === 'income') {
+    return incomeCategories[category] || category
+  } else if (type === 'expense') {
+    return expenseCategories[category] || category
+  }
+  
+  // 兼容旧版本，先尝试收入分类，再尝试支出分类
+  return incomeCategories[category] || expenseCategories[category] || category
 }
 
 // 获取变化样式类
@@ -325,184 +459,36 @@ const getChangeClass = (change) => {
   return change >= 0 ? 'positive' : 'negative'
 }
 
-// 获取饼图的类别数据
-const getCategoryData = () => {
-  // 获取所有交易
-  const transactions = dataStore.transactions
+// 计算最近6个月的收入支出趋势数据
+const monthlyTrendData = computed(() => {
+  const months = [];
+  const incomeData = [];
+  const expenseData = [];
   
-  // 按类别分组收入和支出
-  const incomeByCategory = {}
-  const expenseByCategory = {}
-  
-  transactions.forEach(t => {
-    if (t.type === 'income') {
-      if (!incomeByCategory[t.category]) {
-        incomeByCategory[t.category] = 0
-      }
-      incomeByCategory[t.category] += t.amount
-    } else {
-      if (!expenseByCategory[t.category]) {
-        expenseByCategory[t.category] = 0
-      }
-      expenseByCategory[t.category] += t.amount
-    }
-  })
-  
-  // 准备饼图数据
-  const labels = []
-  const data = []
-  const colors = []
-  const borderColors = []
-  
-  // 收入类别颜色
-  const incomeColors = [
-    'rgba(103, 194, 58, 0.7)',
-    'rgba(103, 194, 58, 0.6)',
-    'rgba(103, 194, 58, 0.5)',
-    'rgba(103, 194, 58, 0.4)',
-    'rgba(103, 194, 58, 0.3)'
-  ]
-  
-  // 支出类别颜色
-  const expenseColors = [
-    'rgba(245, 108, 108, 0.7)',
-    'rgba(245, 108, 108, 0.6)',
-    'rgba(245, 108, 108, 0.5)',
-    'rgba(245, 108, 108, 0.4)',
-    'rgba(245, 108, 108, 0.3)'
-  ]
-  
-  // 添加收入类别
-  Object.entries(incomeByCategory)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([category, amount], index) => {
-      labels.push(`${getCategoryName(category)}(收入)`)
-      data.push(amount)
-      colors.push(incomeColors[index % incomeColors.length])
-      borderColors.push('#67C23A')
-    })
-  
-  // 添加支出类别
-  Object.entries(expenseByCategory)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([category, amount], index) => {
-      labels.push(`${getCategoryName(category)}(支出)`)
-      data.push(amount)
-      colors.push(expenseColors[index % expenseColors.length])
-      borderColors.push('#F56C6C')
-    })
-  
-  return { labels, data, colors, borderColors }
-}
-
-// 获取本年1月到12月的数据
-const getLast6MonthsData = () => {
-  const months = []
-  const incomeData = []
-  const expenseData = []
-  
-  // 生成1月到12月的标签
-  const currentYear = dayjs().year()
-  for (let month = 0; month < 12; month++) {
-    const date = dayjs().year(currentYear).month(month)
-    months.push(date.format('M月'))
+  // 生成最近6个月的数据
+  for (let i = 5; i >= 0; i--) {
+    const month = dayjs().subtract(i, 'month');
+    const monthStr = month.format('YYYY-MM');
+    months.push(month.format('MM月'));
     
+    // 计算该月的收入和支出
     const monthTransactions = dataStore.transactions.filter(t => {
-      return dayjs(t.date).format('YYYY-MM') === date.format('YYYY-MM')
-    })
+      return dayjs(t.date).format('YYYY-MM') === monthStr;
+    });
     
-    // 计算当月收入（所有交易收入，包括已同步的销售收入）
-    const totalIncome = monthTransactions
+    const monthIncome = monthTransactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0)
-    
-    // 计算当月支出
-    const totalExpense = monthTransactions
+      .reduce((sum, t) => sum + t.amount, 0);
+      
+    const monthExpense = monthTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + t.amount, 0);
     
-    incomeData.push(totalIncome)
-    expenseData.push(totalExpense)
+    incomeData.push(monthIncome);
+    expenseData.push(monthExpense);
   }
   
-  return { months, incomeData, expenseData }
-}
-
-// 图表配置选项
-const getChartOptions = (type) => {
-  const baseOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      }
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    }
-  }
-  
-  // 根据图表类型返回不同的配置
-  if (type === 'pie') {
-    return {
-      ...baseOptions,
-      plugins: {
-        ...baseOptions.plugins,
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-              const percentage = Math.round((value / total) * 100);
-              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-            }
-          }
-        }
-      }
-    }
-  } else {
-    return {
-      ...baseOptions,
-      scales: {
-        x: {
-          display: true,
-          grid: {
-            display: false
-          }
-        },
-        y: {
-          display: true,
-          grid: {
-            color: 'rgba(0, 0, 0, 0.1)'
-          },
-          ticks: {
-            callback: function(value) {
-              return '¥' + value.toLocaleString()
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// 初始化图表
-const initChart = () => {
-  if (!chartRef.value) return
-  
-  const ctx = chartRef.value.getContext('2d')
-  const { months, incomeData, expenseData } = getLast6MonthsData()
-  
-  // 使用真实数据
-  const data = {
+  return {
     labels: months,
     datasets: [
       {
@@ -510,200 +496,288 @@ const initChart = () => {
         data: incomeData,
         borderColor: '#67C23A',
         backgroundColor: 'rgba(103, 194, 58, 0.1)',
-        tension: 0.4,
-        fill: true
+        tension: 0.4
       },
       {
         label: '支出',
         data: expenseData,
         borderColor: '#F56C6C',
         backgroundColor: 'rgba(245, 108, 108, 0.1)',
-        tension: 0.4,
-        fill: true
+        tension: 0.4
       }
     ]
-  }
-  
-  // 初始化渲染图表
-  const options = getChartOptions(chartType.value)
-  
-  chartInstance.value = new Chart(ctx, {
-    type: chartType.value,
-    data,
-    options
-  })
-}
+  };
+});
 
-// 根据周期获取数据
-const getDataByPeriod = (period) => {
-  let periods = []
-  let incomeData = []
-  let expenseData = []
+// 检查是否有收入数据
+const hasIncomeData = computed(() => {
+  const incomeTransactions = dataStore.transactions.filter(t => t.type === 'income');
+  return incomeTransactions.length > 0;
+});
+
+// 检查是否有支出数据
+const hasExpenseData = computed(() => {
+  const expenseTransactions = dataStore.transactions.filter(t => t.type === 'expense');
+  return expenseTransactions.length > 0;
+});
+
+// 计算收入分类饼图数据
+const incomeDistributionData = computed(() => {
+  const incomeTransactions = dataStore.transactions.filter(t => t.type === 'income');
+  const categoryTotals = {};
   
-  if (period === 'month') {
-    // 最近4周，按周显示
-    for (let i = 3; i >= 0; i--) {
-      const startDate = dayjs().subtract((i + 1) * 7, 'day')
-      const endDate = dayjs().subtract(i * 7, 'day')
-      periods.push(`第${4-i}周`)
-      
-      const weekTransactions = dataStore.transactions.filter(t => {
-        const date = dayjs(t.date)
-        return date.isAfter(startDate) && date.isBefore(endDate)
-      })
-      
-      const totalIncome = weekTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-      const totalExpense = weekTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
-      
-      incomeData.push(totalIncome)
-      expenseData.push(totalExpense)
-    }
-  } else if (period === 'quarter') {
-    // 最近3个月
-    for (let i = 2; i >= 0; i--) {
-      const date = dayjs().subtract(i, 'month')
-      periods.push(date.format('M月'))
-      
-      const monthTransactions = dataStore.transactions.filter(t => {
-        return dayjs(t.date).format('YYYY-MM') === date.format('YYYY-MM')
-      })
-      
-      const totalIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-      const totalExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
-      
-      incomeData.push(totalIncome)
-      expenseData.push(totalExpense)
-    }
-  } else if (period === 'year') {
-    // 年度数据，显示最近6个月
-    return getLast6MonthsData()
-  } else if (period === 'all') {
-    // 全周期数据，按月显示所有数据
-    const allTransactions = dataStore.transactions
-    const monthlyData = {}
+  incomeTransactions.forEach(t => {
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+  });
+  
+  const labels = Object.keys(categoryTotals).map(cat => getCategoryName(cat, 'income'));
+  const data = Object.values(categoryTotals);
+  const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399'];
+  
+  return {
+    labels,
+    datasets: [{
+      data,
+      backgroundColor: colors.slice(0, labels.length),
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  };
+});
+
+// 计算支出分类饼图数据
+const expenseDistributionData = computed(() => {
+  const expenseTransactions = dataStore.transactions.filter(t => t.type === 'expense');
+  const categoryTotals = {};
+  
+  expenseTransactions.forEach(t => {
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+  });
+  
+  const labels = Object.keys(categoryTotals).map(cat => getCategoryName(cat, 'expense'));
+  const data = Object.values(categoryTotals);
+  const colors = ['#F56C6C', '#E6A23C', '#909399', '#C0C4CC', '#A0CFFF'];
+  
+  return {
+    labels,
+    datasets: [{
+      data,
+      backgroundColor: colors.slice(0, labels.length),
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  };
+});
+
+
+// 初始化趋势图表
+const initTrendChart = () => {
+  if (trendChartRef.value && monthlyTrendData.value) {
+    const ctx = trendChartRef.value.getContext('2d')
     
-    // 按月分组所有交易数据
-    allTransactions.forEach(t => {
-      const monthKey = dayjs(t.date).format('YYYY-MM')
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expense: 0 }
-      }
-      if (t.type === 'income') {
-        monthlyData[monthKey].income += t.amount
-      } else {
-        monthlyData[monthKey].expense += t.amount
+    if (trendChartInstance.value) {
+      trendChartInstance.value.destroy()
+    }
+    
+    trendChartInstance.value = new Chart(ctx, {
+      type: 'line',
+      data: monthlyTrendData.value,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              generateLabels: function(chart) {
+                const datasets = chart.data.datasets;
+                const labels = [];
+                
+                datasets.forEach((dataset, i) => {
+                  // 计算每个数据集的最新值（最后一个非空值）
+                  let latestValue = 0;
+                  for (let j = dataset.data.length - 1; j >= 0; j--) {
+                    if (dataset.data[j] !== null && dataset.data[j] !== undefined) {
+                      latestValue = dataset.data[j];
+                      break;
+                    }
+                  }
+                  
+                  labels.push({
+                    text: `${dataset.label}: ${formatCurrency(latestValue)}`,
+                    fillStyle: dataset.borderColor,
+                    strokeStyle: dataset.borderColor,
+                    lineWidth: 2,
+                    hidden: dataset.hidden,
+                    index: i,
+                    datasetIndex: i
+                  });
+                });
+                
+                return labels;
+              }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + formatCurrency(context.parsed.y)
+              }
+            }
+          },
+          datalabels: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return ''  // 不显示Y轴刻度值
+              }
+            }
+          }
+        }
       }
     })
+  }
+}
+
+// 初始化收入饼图
+const initIncomeChart = () => {
+  if (incomeChartRef.value && incomeDistributionData.value) {
+    const ctx = incomeChartRef.value.getContext('2d')
     
-    // 按时间排序并生成数据
-    const sortedMonths = Object.keys(monthlyData).sort()
-    sortedMonths.forEach(monthKey => {
-      periods.push(dayjs(monthKey).format('M月'))
-      incomeData.push(monthlyData[monthKey].income)
-      expenseData.push(monthlyData[monthKey].expense)
+    if (incomeChartInstance.value) {
+      incomeChartInstance.value.destroy()
+    }
+    
+    incomeChartInstance.value = new Chart(ctx, {
+      type: 'doughnut',
+      data: incomeDistributionData.value,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              generateLabels: function(chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  const dataset = data.datasets[0];
+                  const total = dataset.data.reduce((a, b) => a + b, 0);
+                  
+                  return data.labels.map(function(label, i) {
+                    const value = dataset.data[i];
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return {
+                      text: `${label}: ${formatCurrency(value)} (${percentage}%)`,
+                      fillStyle: dataset.backgroundColor[i],
+                      hidden: false,
+                      index: i,
+                      datasetIndex: 0
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            mode: 'nearest',
+            intersect: true,
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+              }
+            }
+          },
+          datalabels: {
+            display: false
+          }
+        }
+      }
     })
   }
-  
-  return { months: periods, incomeData, expenseData }
 }
 
-// 渲染图表
-const renderChart = (data, type) => {
-  // 使用chartRef获取上下文
-  const chartContext = chartRef.value.getContext('2d')
-  const options = getChartOptions(type)
-  
-  // 销毁现有图表
-  if (chartInstance.value) {
-    chartInstance.value.destroy()
-  }
-  
-  // 根据图表类型处理数据
-  let chartData = data
-  if (type === 'pie') {
-    // 为饼图准备数据
-    const categoryData = getCategoryData()
+// 初始化支出饼图
+const initExpenseChart = () => {
+  if (expenseChartRef.value && expenseDistributionData.value) {
+    const ctx = expenseChartRef.value.getContext('2d')
     
-    chartData = {
-      labels: categoryData.labels,
-      datasets: [{
-        data: categoryData.data,
-        backgroundColor: categoryData.colors,
-        borderColor: categoryData.borderColors,
-        borderWidth: 1
-      }]
+    if (expenseChartInstance.value) {
+      expenseChartInstance.value.destroy()
     }
+    
+    expenseChartInstance.value = new Chart(ctx, {
+      type: 'doughnut',
+      data: expenseDistributionData.value,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              generateLabels: function(chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  const dataset = data.datasets[0];
+                  const total = dataset.data.reduce((a, b) => a + b, 0);
+                  
+                  return data.labels.map(function(label, i) {
+                    const value = dataset.data[i];
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return {
+                      text: `${label}: ${formatCurrency(value)} (${percentage}%)`,
+                      fillStyle: dataset.backgroundColor[i],
+                      hidden: false,
+                      index: i,
+                      datasetIndex: 0
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            mode: 'nearest',
+            intersect: true,
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+              }
+            }
+          },
+          datalabels: {
+            display: false
+          }
+        }
+      }
+    })
   }
-  
-  // 创建新图表
-  chartInstance.value = new Chart(chartContext, {
-    type: type === 'pie' ? 'pie' : type,
-    data: chartData,
-    options
-  })
 }
 
-// 切换图表类型
-const switchChartType = () => {
-  const { months, incomeData, expenseData } = getDataByPeriod(chartPeriod.value)
-  
-  const data = {
-    labels: months,
-    datasets: [
-      {
-        label: '收入',
-        data: incomeData,
-        borderColor: '#67C23A',
-        backgroundColor: type => type === 'line' ? 'rgba(103, 194, 58, 0.1)' : 'rgba(103, 194, 58, 0.7)',
-        tension: 0.4,
-        fill: chartType.value === 'line'
-      },
-      {
-        label: '支出',
-        data: expenseData,
-        borderColor: '#F56C6C',
-        backgroundColor: type => type === 'line' ? 'rgba(245, 108, 108, 0.1)' : 'rgba(245, 108, 108, 0.7)',
-        tension: 0.4,
-        fill: chartType.value === 'line'
-      }
-    ]
-  }
-  
-  renderChart(data, chartType.value)
-}
-
-// 更新图表
-const updateChart = () => {
-  if (!chartRef.value) return
-  
-  // 获取数据
-  const { months, incomeData, expenseData } = getDataByPeriod(chartPeriod.value)
-  
-  // 周期变化时，总收入和总支出会通过periodFinancialData计算属性自动更新
-  
-  const data = {
-    labels: months,
-    datasets: [
-      {
-        label: '收入',
-        data: incomeData,
-        borderColor: '#67C23A',
-        backgroundColor: chartType.value === 'line' ? 'rgba(103, 194, 58, 0.1)' : 'rgba(103, 194, 58, 0.7)',
-        tension: 0.4,
-        fill: chartType.value === 'line'
-      },
-      {
-        label: '支出',
-        data: expenseData,
-        borderColor: '#F56C6C',
-        backgroundColor: chartType.value === 'line' ? 'rgba(245, 108, 108, 0.1)' : 'rgba(245, 108, 108, 0.7)',
-        tension: 0.4,
-        fill: chartType.value === 'line'
-      }
-    ]
-  }
-  
-  renderChart(data, chartType.value)
+// 初始化所有图表
+const initAllCharts = () => {
+  initTrendChart()
+  initIncomeChart()
+  initExpenseChart()
 }
 
 // 打开添加交易对话框
@@ -713,15 +787,16 @@ const openAddTransactionDialog = () => {
 
 // 处理交易添加成功
 const handleTransactionAdded = () => {
-  // 刷新数据
+  // 刷新数据和图表
   console.log('交易添加成功')
-  // 更新图表
-  updateChart()
+  nextTick(() => {
+    initAllCharts()
+  })
 }
 
 onMounted(async () => {
   await nextTick()
-  initChart()
+  initAllCharts()
 })
 </script>
 
@@ -866,7 +941,53 @@ onMounted(async () => {
         position: relative;
       }
       
+      .financial-overview {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        padding: 20px 0;
+        
+        .overview-item {
+          text-align: center;
+          padding: 16px;
+          background: var(--el-fill-color-lighter);
+          border-radius: 8px;
+          
+          .overview-label {
+            font-size: 14px;
+            color: var(--el-text-color-regular);
+            margin-bottom: 8px;
+          }
+          
+          .overview-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--el-text-color-primary);
+            
+            &.positive {
+              color: var(--el-color-success);
+            }
+            
+            &.negative {
+              color: var(--el-color-danger);
+            }
+          }
+        }
+      }
+      
       .card-header {
+        .card-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--el-text-color-primary);
+        }
+        
+        .card-subtitle {
+          font-size: 12px;
+          color: var(--el-text-color-regular);
+          margin-left: 8px;
+        }
+        
         .chart-controls {
           display: flex;
           gap: 10px;

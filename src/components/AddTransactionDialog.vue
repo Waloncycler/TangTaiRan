@@ -160,23 +160,18 @@ watch(() => props.transaction, (val) => {
 // 分类选项
 const categoryOptions = computed(() => {
   const incomeCategories = [
-    { value: 'salary', label: '工资' },
-    { value: 'bonus', label: '奖金' },
-    { value: 'investment', label: '投资收益' },
-    { value: 'freelance', label: '自由职业' },
-    { value: 'rental', label: '租金收入' },
-    { value: 'other', label: '其他收入' }
+    { value: 'self_employed', label: '自营' },
+    { value: 'online_store', label: '网店' },
+    { value: 'live_streaming', label: '直播' },
+    { value: 'agency', label: '代理' },
+    { value: 'other', label: '其它' }
   ]
   
   const expenseCategories = [
-    { value: 'food', label: '餐饮' },
-    { value: 'transport', label: '交通' },
-    { value: 'entertainment', label: '娱乐' },
-    { value: 'shopping', label: '购物' },
-    { value: 'utilities', label: '水电费' },
-    { value: 'healthcare', label: '医疗' },
-    { value: 'education', label: '教育' },
-    { value: 'other', label: '其他支出' }
+    { value: 'purchase', label: '进货' },
+    { value: 'salary', label: '员工工资' },
+    { value: 'rent_utilities', label: '房租水电' },
+    { value: 'other', label: '其它支出' }
   ]
   
   return form.type === 'income' 
@@ -248,7 +243,7 @@ const handleSubmit = async () => {
       const transactionId = props.transaction.id || props.transaction._id
       const result = await dataStore.updateTransaction(transactionId, transaction)
       if (result) {
-        ElMessage.success('交易记录更新成功')
+      ElMessage.success('交易记录更新成功')
       } else {
         ElMessage.error('交易记录更新失败')
         return
@@ -257,7 +252,7 @@ const handleSubmit = async () => {
       // 添加新交易
       const result = await dataStore.addTransaction(transaction)
       if (result) {
-        ElMessage.success('交易记录添加成功')
+      ElMessage.success('交易记录添加成功')
       } else {
         ElMessage.error('交易记录添加失败')
         return
