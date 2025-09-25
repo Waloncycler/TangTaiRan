@@ -1,38 +1,46 @@
 const mongoose = require('mongoose');
 
 const inventorySchema = new mongoose.Schema({
-  id: { 
-    type: Number, 
-    required: true, 
-    unique: true 
+  id: {
+    type: Number,
+    unique: true,
+    required: true
   },
-  name: { 
-    type: String, 
-    required: true 
-  },
-  quantity: { 
-    type: Number, 
-    required: true, 
-    default: 0,
-    min: 0
-  },
-  unit: { 
-    type: String, 
-    required: true 
-  },
-  location: { 
+  productCode: {
     type: String,
+    required: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  unit: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true,
     default: ''
   },
-  status: { 
-    type: String, 
-    enum: ['normal', 'low', 'out'], 
-    default: 'normal' 
+  status: {
+    type: String,
+    enum: ['normal', 'low', 'out'],
+    default: 'normal'
   },
   lowThreshold: {
     type: Number,
-    default: 10,
-    min: 0
+    min: 0,
+    default: 10
   }
 }, {
   timestamps: true
@@ -52,9 +60,11 @@ inventorySchema.pre('save', function(next) {
   next();
 });
 
-// 索引优化查询
+// 索引优化
 inventorySchema.index({ status: 1 });
 inventorySchema.index({ location: 1 });
+// 复合唯一索引：同一产品在同一位置不能重复
+inventorySchema.index({ productCode: 1, location: 1 }, { unique: true });
 
 // 获取低库存商品的静态方法
 inventorySchema.statics.getLowStockItems = async function() {

@@ -145,7 +145,7 @@ backend/
 const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'generalAgent', 'cityAgent', 'teamLeader', 'salesPerson'], default: 'admin' },
+  role: { type: String, enum: ['admin', 'generalAgent', 'regionalAgent', 'cityAgent'], default: 'admin' },
   agentId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
@@ -158,7 +158,7 @@ const UserSchema = new Schema({
 const AgentSchema = new Schema({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
-  level: { type: Number, required: true }, // 1:州总代理, 2:城市代理, 3:团队长, 4:销售员
+  level: { type: Number, required: true }, // 1:总代理, 2:区域代理, 3:城市代理
   parentId: { type: String, default: null },
   phone: { type: String },
   email: { type: String },

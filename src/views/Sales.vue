@@ -7,14 +7,14 @@
           <el-icon><TrendCharts /></el-icon>
           销售统计
         </h1>
-        <p class="page-subtitle">代理销售追踪 · 团队管理 · 销量统计分析</p>
+        <p class="page-subtitle">销售数据分析 · 代理管理 · 业绩统计</p>
       </div>
       <div class="header-actions">
         <el-button type="primary" :icon="Plus" @click="showAddSaleDialog = true">
           添加销售记录
         </el-button>
-        <el-button type="success" :icon="Plus" @click="showAddAgentDialog = true">
-          添加代理
+        <el-button type="success" :icon="Refresh" @click="refreshData" :loading="isLoading">
+          刷新数据
         </el-button>
       </div>
     </div>
@@ -36,23 +36,32 @@
           />
         </div>
         <div class="filter-item">
-          <label>代理级别：</label>
-          <el-select v-model="filters.agentLevel" placeholder="选择级别" clearable>
-            <el-option label="州总代理" value="1" />
-            <el-option label="城市代理" value="2" />
-            <el-option label="团队长" value="3" />
-            <el-option label="销售员" value="4" />
+          <label>代理：</label>
+          <el-select v-model="selectedAgentId" placeholder="选择代理" clearable filterable>
+            <el-option
+              v-for="agent in salesStore.flatAgentsList"
+              :key="agent._id"
+              :label="`${agent.name} (${getAgentLevelName(agent.level)})`"
+              :value="agent._id"
+            />
           </el-select>
         </div>
         <div class="filter-item">
-          <label>州属：</label>
-          <el-select v-model="filters.region" placeholder="选择州属" clearable>
-            <el-option label="Sarawak" value="Sarawak" />
-            <el-option label="Sabah" value="Sabah" />
-            <el-option label="Kuala Lumpur" value="Kuala Lumpur" />
-            <el-option label="Selangor" value="Selangor" />
-            <el-option label="Penang" value="Penang" />
-            <el-option label="Johor" value="Johor" />
+          <label>支付方式：</label>
+          <el-select v-model="selectedPaymentMethod" placeholder="选择支付方式" clearable>
+            <el-option label="现金" value="cash" />
+            <el-option label="银行转账" value="bank_transfer" />
+            <el-option label="支付宝" value="alipay" />
+            <el-option label="微信支付" value="wechat" />
+            <el-option label="信用卡" value="credit_card" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <label>支付状态：</label>
+          <el-select v-model="selectedPaymentStatus" placeholder="选择支付状态" clearable>
+            <el-option label="已支付" value="paid" />
+            <el-option label="待支付" value="pending" />
+            <el-option label="已取消" value="cancelled" />
           </el-select>
         </div>
         <div class="filter-actions">
@@ -63,7 +72,7 @@
     </el-card>
 
     <!-- 统计概览卡片 -->
-    <div class="stats-overview">
+    <div class="stats-overview" v-loading="salesStore.salesStatsLoading">
       <el-row :gutter="20">
         <el-col :span="6">
           <el-card class="stat-card">
@@ -72,8 +81,8 @@
                 <el-icon><ShoppingCart /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ salesStatistics.total.totalSales }}</div>
-                <div class="stat-label">总销售订单</div>
+                <div class="stat-value">{{ salesStatsSummary?.totalOrders || 0 }}</div>
+                <div class="stat-label">总订单数</div>
               </div>
             </div>
           </el-card>
@@ -85,7 +94,7 @@
                 <el-icon><Money /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">¥{{ formatNumber(salesStatistics.total.totalAmount) }}</div>
+                <div class="stat-value">{{ formatCurrency(salesStatsSummary?.totalSales || 0) }}</div>
                 <div class="stat-label">总销售金额</div>
               </div>
             </div>
@@ -94,12 +103,12 @@
         <el-col :span="6">
           <el-card class="stat-card">
             <div class="stat-content">
-              <div class="stat-icon total-quantity">
-                <el-icon><Box /></el-icon>
+              <div class="stat-icon average-order">
+                <el-icon><Money /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ salesStatistics.total.totalQuantity }}</div>
-                <div class="stat-label">总销售数量</div>
+                <div class="stat-value">{{ formatCurrency(salesStatsSummary?.averageOrderValue || 0) }}</div>
+                <div class="stat-label">平均订单金额</div>
               </div>
             </div>
           </el-card>
@@ -111,7 +120,7 @@
                 <el-icon><User /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ Object.keys(salesStore.agents).length }}</div>
+                <div class="stat-value">{{ salesStore.flatAgentsList?.length || 0 }}</div>
                 <div class="stat-label">代理总数</div>
               </div>
             </div>
@@ -122,40 +131,51 @@
 
     <!-- 主要内容区域 -->
     <el-row :gutter="20" class="main-content-row">
-      <!-- 左侧：团队结构和排行榜 -->
+      <!-- 左侧：代理层级和排行榜 -->
       <el-col :span="10">
-        <!-- 团队结构树 -->
-        <el-card class="team-tree-card">
+        <!-- 代理层级结构 -->
+        <el-card class="team-tree-card" v-loading="salesStore.agentsLoading">
           <template #header>
             <div class="card-header">
               <span class="card-title">
                 <el-icon><Share /></el-icon>
-                团队结构
+                代理层级结构
               </span>
             </div>
           </template>
           <div class="team-tree-container">
             <el-tree
-              :data="teamTree"
+              :data="salesStore.agentHierarchy"
               :props="treeProps"
-              node-key="id"
+              node-key="_id"
               :expand-on-click-node="false"
               :default-expand-all="true"
-              @node-click="handleNodeClick"
+              @node-click="handleAgentClick"
             >
               <template #default="{ node, data }">
                 <div class="tree-node">
                   <div class="node-info">
-                    <el-avatar :size="24" class="node-avatar">
-                      {{ data.name.charAt(0) }}
+                    <el-avatar :size="28" class="node-avatar">
+                      {{ data.name?.charAt(0) || 'A' }}
                     </el-avatar>
-                    <span class="node-name">{{ data.name }}</span>
-                    <el-tag :type="getLevelTagType(data.level)" size="small">
-                      {{ salesStore.getAgentLevelName(data.level) }}
-                    </el-tag>
-                  </div>
-                  <div class="node-stats">
-                    <span class="stat-item">销量: {{ getAgentSalesCount(data.id) }}</span>
+                    <div class="node-details">
+                      <div class="node-title">
+                        <span class="node-name">{{ data.name }}</span>
+                        <el-tag :type="getLevelTagType(data.level)" size="small">
+                          {{ getAgentLevelName(data.level) }}
+                        </el-tag>
+                      </div>
+                      <div class="node-stats">
+                        <span class="stat-item">
+                          <el-icon><Phone /></el-icon> 
+                          {{ data.phone || '未设置' }}
+                        </span>
+                        <span class="stat-item">
+                          <el-icon><Location /></el-icon> 
+                          {{ data.city || '未设置' }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </template>
@@ -171,16 +191,12 @@
                 <el-icon><Trophy /></el-icon>
                 销售排行榜
               </span>
-              <el-radio-group v-model="rankingType" size="small">
-                <el-radio-button label="amount">按金额</el-radio-button>
-                <el-radio-button label="quantity">按数量</el-radio-button>
-              </el-radio-group>
             </div>
           </template>
-          <div class="ranking-list">
+          <div class="ranking-list" v-loading="salesStore.salesStatsLoading">
             <div 
-              v-for="(agent, index) in sortedRanking.slice(0, 5)" 
-              :key="agent.id" 
+              v-for="(agent, index) in topAgents" 
+              :key="agent._id" 
               class="ranking-item"
               :class="{ 'top-three': index < 3 }"
             >
@@ -191,137 +207,225 @@
                 <span v-else class="rank-text">{{ index + 1 }}</span>
               </div>
               <el-avatar :size="28" class="agent-avatar">
-                {{ agent.name.charAt(0) }}
+                {{ getAgentName(agent._id)?.charAt(0) || 'A' }}
               </el-avatar>
               <div class="agent-info">
-                <div class="agent-name">{{ agent.name }}</div>
-                <div class="agent-level">{{ salesStore.getAgentLevelName(agent.level) }}</div>
-              </div>
-              <div class="agent-stats">
-                <div class="stat-value">
-                  {{ rankingType === 'amount' ? '¥' + formatNumber(agent.totalAmount) : agent.totalQuantity + '件' }}
-                </div>
-                <div class="stat-label">
-                  {{ rankingType === 'amount' ? '销售金额' : '销售数量' }}
+                <div class="agent-name">{{ getAgentName(agent._id) || '未知代理' }}</div>
+                <div class="agent-stats">
+                  <span class="sales-amount">{{ formatCurrency(agent?.total || 0) }}</span>
+                  <span class="sales-count">{{ agent.count }}单</span>
                 </div>
               </div>
+            </div>
+            <div v-if="!(topAgents?.length)" class="no-data">
+              暂无销售数据
             </div>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 右侧：销售趋势图表 -->
+      <!-- 右侧：图表和数据表格 -->
       <el-col :span="14">
-        <el-card class="chart-card">
+        <!-- 图表区域 -->
+        <el-card class="charts-card">
           <template #header>
             <div class="card-header">
               <span class="card-title">
-                <el-icon><TrendCharts /></el-icon>
+                <el-icon><DataAnalysis /></el-icon>
                 销售趋势分析
               </span>
-              <div class="chart-actions">
-                <el-radio-group v-model="chartType" size="small">
-                  <el-radio-button label="line">趋势图</el-radio-button>
-                  <el-radio-button label="bar">柱状图</el-radio-button>
-                </el-radio-group>
+              <el-radio-group v-model="chartType" size="small">
+                <el-radio-button label="monthly">月度趋势</el-radio-button>
+                <el-radio-button label="payment">支付方式</el-radio-button>
+              </el-radio-group>
+            </div>
+          </template>
+          <div class="chart-container" v-loading="salesStore.salesStatsLoading">
+            <!-- 月度销售趋势图 -->
+            <div v-if="chartType === 'monthly'" class="monthly-chart">
+              <div v-if="monthlySalesTrend?.length" class="chart-content">
+                <div class="chart-placeholder">
+                  <el-icon><DataLine /></el-icon>
+                  <p>月度销售趋势图</p>
+                  <div class="trend-data">
+                    <div v-for="month in monthlySalesTrend" :key="month.month" class="trend-item">
+                      <span class="month">{{ month.formattedMonth }}</span>
+                      <span class="amount">{{ formatCurrency(month.sales) }}</span>
+                      <span class="orders">{{ month.orders }}单</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="no-chart-data">
+                <el-icon><DataLine /></el-icon>
+                <p>暂无月度数据</p>
+              </div>
+            </div>
+
+            <!-- 支付方式分布图 -->
+            <div v-if="chartType === 'payment'" class="payment-chart">
+              <div v-if="paymentMethodDistribution?.length" class="chart-content">
+                <div class="chart-placeholder">
+                  <el-icon><PieChart /></el-icon>
+                  <p>支付方式分布</p>
+                  <div class="payment-data">
+                    <div v-for="method in paymentMethodDistribution" :key="method.method" class="payment-item">
+                      <span class="method">{{ getPaymentMethodName(method.method) }}</span>
+                      <span class="amount">{{ formatCurrency(method.amount) }}</span>
+                      <span class="percentage">{{ method.percentage }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="no-chart-data">
+                <el-icon><PieChart /></el-icon>
+                <p>暂无支付数据</p>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 销售记录表格 -->
+        <el-card class="table-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">
+                <el-icon><List /></el-icon>
+                销售记录
+              </span>
+              <div class="table-actions">
+                <el-button size="small" @click="exportData">导出数据</el-button>
               </div>
             </div>
           </template>
-          <div class="chart-container">
-            <canvas ref="salesChartRef" width="400" height="300"></canvas>
+          <el-table
+            :data="salesStore.formattedSalesRecords"
+            v-loading="salesStore.salesRecordsLoading"
+            stripe
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="saleDate" label="销售日期" width="120">
+              <template #default="{ row }">
+                {{ row.formattedDate }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="agentId" label="代理" width="120">
+              <template #default="{ row }">
+                {{ getAgentName(row.agentId) || '未知代理' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="customerName" label="客户" width="120" />
+            <el-table-column prop="products" label="产品" min-width="200">
+              <template #default="{ row }">
+                <div v-if="row.products && row.products?.length">
+                  <div v-for="product in row.products" :key="product._id" class="product-item">
+                    {{ product.name }} x{{ product.quantity }}
+                  </div>
+                </div>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="totalAmount" label="总金额" width="120">
+              <template #default="{ row }">
+                {{ row.formattedAmount }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="paymentMethod" label="支付方式" width="100">
+              <template #default="{ row }">
+                {{ getPaymentMethodName(row.paymentMethod) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="paymentStatus" label="支付状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getPaymentStatusType(row.paymentStatus)">
+                  {{ getPaymentStatusName(row.paymentStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" type="primary" @click="viewSaleRecord(row)">查看</el-button>
+                <el-button size="small" @click="editSaleRecord(row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="deleteSaleRecord(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          
+          <!-- 分页 -->
+          <div class="pagination-container">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="salesStore.salesRecordsPagination?.total || 0"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 销售记录表格 -->
-    <el-card class="table-card">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">
-            <el-icon><Document /></el-icon>
-            销售记录
-          </span>
-          <div class="header-actions">
-            <el-input
-              v-model="searchKeyword"
-              placeholder="搜索客户姓名或代理姓名"
-              :prefix-icon="Search"
-              style="width: 200px; margin-right: 10px;"
-            />
-            <el-button :icon="Download" @click="exportData">导出</el-button>
-          </div>
-        </div>
-      </template>
-      <el-table :data="filteredSalesRecords" stripe>
-        <el-table-column prop="saleDate" label="销售日期" width="120" />
-        <el-table-column label="代理信息" width="150">
-          <template #default="{ row }">
-            <div class="agent-cell">
-              <div>{{ getAgentName(row.agentId) }}</div>
-              <el-tag size="small" :type="getLevelTagType(getAgentLevel(row.agentId))">
-                {{ salesStore.getAgentLevelName(getAgentLevel(row.agentId)) }}
-              </el-tag>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="productName" label="产品名称" />
-        <el-table-column prop="quantity" label="数量" width="80" />
-        <el-table-column label="单价" width="100">
-          <template #default="{ row }">
-            ¥{{ row.unitPrice }}
-          </template>
-        </el-table-column>
-        <el-table-column label="总金额" width="120">
-          <template #default="{ row }">
-            <span class="amount-text">¥{{ formatNumber(row.totalAmount) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="customerName" label="客户姓名" width="120" />
-        <el-table-column prop="region" label="州属" width="100" />
-        <el-table-column label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'completed' ? 'success' : 'warning'">
-              {{ row.status === 'completed' ? '已完成' : '进行中' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="editSaleRecord(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteSaleRecord(row.id)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
     <!-- 添加销售记录对话框 -->
-    <el-dialog v-model="showAddSaleDialog" title="添加销售记录" width="600px">
-      <el-form :model="saleForm" :rules="saleRules" ref="saleFormRef" label-width="100px">
-        <el-form-item label="销售代理" prop="agentId">
-          <el-select v-model="saleForm.agentId" placeholder="选择销售代理" style="width: 100%">
+    <el-dialog
+      v-model="showAddSaleDialog"
+      title="添加销售记录"
+      width="600px"
+      :before-close="handleCloseAddSaleDialog"
+    >
+      <el-form
+        ref="saleFormRef"
+        :model="saleForm"
+        :rules="saleFormRules"
+        label-width="100px"
+      >
+        <el-form-item label="代理" prop="agentId">
+          <el-select v-model="saleForm.agentId" placeholder="选择代理" filterable>
             <el-option
-              v-for="agent in Object.values(salesStore.agents)"
-              :key="agent.id"
-              :label="`${agent.name} (${salesStore.getAgentLevelName(agent.level)})`"
-              :value="agent.id"
+              v-for="agent in salesStore.flatAgentsList"
+              :key="agent._id"
+              :label="`${agent.name} (${getAgentLevelName(agent.level)})`"
+              :value="agent._id"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="产品名称" prop="productName">
-          <el-input v-model="saleForm.productName" placeholder="请输入产品名称" />
-        </el-form-item>
-        <el-form-item label="销售数量" prop="quantity">
-          <el-input-number v-model="saleForm.quantity" :min="1" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="单价" prop="unitPrice">
-          <el-input-number v-model="saleForm.unitPrice" :min="0" :precision="2" style="width: 100%" />
         </el-form-item>
         <el-form-item label="客户姓名" prop="customerName">
           <el-input v-model="saleForm.customerName" placeholder="请输入客户姓名" />
         </el-form-item>
         <el-form-item label="客户电话" prop="customerPhone">
           <el-input v-model="saleForm.customerPhone" placeholder="请输入客户电话" />
+        </el-form-item>
+        <el-form-item label="客户地址" prop="customerAddress">
+          <el-input v-model="saleForm.customerAddress" type="textarea" placeholder="请输入客户地址" />
+        </el-form-item>
+        <el-form-item label="产品信息" prop="products">
+          <div class="products-container">
+            <div v-for="(product, index) in saleForm.products" :key="index" class="product-row">
+              <el-input v-model="product.name" placeholder="产品名称" style="width: 200px; margin-right: 10px;" />
+              <el-input-number v-model="product.quantity" :min="1" placeholder="数量" style="width: 100px; margin-right: 10px;" />
+              <el-input-number v-model="product.price" :min="0" :precision="2" placeholder="单价" style="width: 120px; margin-right: 10px;" />
+              <el-button type="danger" size="small" @click="removeProduct(index)" v-if="saleForm.products?.length > 1">删除</el-button>
+            </div>
+            <el-button type="primary" size="small" @click="addProduct">添加产品</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="支付方式" prop="paymentMethod">
+          <el-select v-model="saleForm.paymentMethod" placeholder="选择支付方式">
+            <el-option label="现金" value="cash" />
+            <el-option label="银行转账" value="bank_transfer" />
+            <el-option label="支付宝" value="alipay" />
+            <el-option label="微信支付" value="wechat" />
+            <el-option label="信用卡" value="credit_card" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付状态" prop="paymentStatus">
+          <el-select v-model="saleForm.paymentStatus" placeholder="选择支付状态">
+            <el-option label="已支付" value="paid" />
+            <el-option label="待支付" value="pending" />
+          </el-select>
         </el-form-item>
         <el-form-item label="销售日期" prop="saleDate">
           <el-date-picker
@@ -330,166 +434,147 @@
             placeholder="选择销售日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
-            style="width: 100%"
           />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="saleForm.notes" type="textarea" placeholder="请输入备注信息" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddSaleDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitSaleForm">确定</el-button>
+        <span class="dialog-footer">
+          <el-button @click="showAddSaleDialog = false">取消</el-button>
+          <el-button type="primary" @click="submitSaleForm" :loading="submitting">确定</el-button>
+        </span>
       </template>
     </el-dialog>
 
-    <!-- 添加代理对话框 -->
-    <el-dialog v-model="showAddAgentDialog" title="添加代理" width="600px">
-      <el-form :model="agentForm" :rules="agentRules" ref="agentFormRef" label-width="100px">
-        <el-form-item label="代理姓名" prop="name">
-          <el-input v-model="agentForm.name" placeholder="请输入代理姓名" />
-        </el-form-item>
-        <el-form-item label="代理级别" prop="level">
-          <el-select v-model="agentForm.level" placeholder="选择代理级别" style="width: 100%">
-            <el-option label="州总代理" :value="1" />
-            <el-option label="城市代理" :value="2" />
-            <el-option label="团队长" :value="3" />
-            <el-option label="销售员" :value="4" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="上级代理" prop="parentId">
-          <el-select v-model="agentForm.parentId" placeholder="选择上级代理" clearable style="width: 100%">
-            <el-option
-              v-for="agent in Object.values(salesStore.agents)"
-              :key="agent.id"
-              :label="`${agent.name} (${salesStore.getAgentLevelName(agent.level)})`"
-              :value="agent.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="手机号码" prop="phone">
-          <el-input v-model="agentForm.phone" placeholder="请输入手机号码" />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="agentForm.email" placeholder="请输入邮箱" />
-        </el-form-item>
-        <el-form-item label="州属" prop="region">
-          <el-select v-model="agentForm.region" placeholder="选择州属" style="width: 100%">
-            <el-option label="Sarawak" value="Sarawak" />
-            <el-option label="Sabah" value="Sabah" />
-            <el-option label="Kuala Lumpur" value="Kuala Lumpur" />
-            <el-option label="Selangor" value="Selangor" />
-            <el-option label="Penang" value="Penang" />
-            <el-option label="Johor" value="Johor" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="城市" prop="city">
-          <el-input v-model="agentForm.city" placeholder="请输入城市" />
-        </el-form-item>
-      </el-form>
+    <!-- 查看销售记录对话框 -->
+    <el-dialog
+      v-model="showViewDialog"
+      title="查看销售记录"
+      width="600px"
+    >
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="销售ID">
+          {{ currentViewRecord._id }}
+        </el-descriptions-item>
+        <el-descriptions-item label="代理">
+          {{ currentViewRecord.agentName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="客户姓名">
+          {{ currentViewRecord.customerName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="客户电话">
+          {{ currentViewRecord.customerPhone }}
+        </el-descriptions-item>
+        <el-descriptions-item label="客户地址" :span="2">
+          {{ currentViewRecord.customerAddress }}
+        </el-descriptions-item>
+        <el-descriptions-item label="销售日期">
+          {{ formatDate(currentViewRecord.saleDate) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="总金额">
+          ¥{{ (currentViewRecord?.totalAmount || 0).toFixed(2) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="支付方式">
+          {{ getPaymentMethodName(currentViewRecord.paymentMethod) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="支付状态">
+          <el-tag :type="getPaymentStatusType(currentViewRecord.paymentStatus)">
+            {{ getPaymentStatusName(currentViewRecord.paymentStatus) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="产品信息" :span="2">
+          <div v-if="currentViewRecord.products && currentViewRecord.products?.length > 0">
+            <div v-for="(product, index) in currentViewRecord.products" :key="index" class="product-item">
+              <span>{{ product.name }} × {{ product.quantity }} = ¥{{ (product.price * product.quantity).toFixed(2) }}</span>
+            </div>
+          </div>
+          <span v-else>暂无产品信息</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">
+          {{ currentViewRecord.notes || '无' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{ formatDate(currentViewRecord.createdAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="更新时间">
+          {{ formatDate(currentViewRecord.updatedAt) }}
+        </el-descriptions-item>
+      </el-descriptions>
       <template #footer>
-        <el-button @click="showAddAgentDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitAgentForm">确定</el-button>
+        <span class="dialog-footer">
+          <el-button @click="showViewDialog = false">关闭</el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { useSalesStore } from '@/stores/sales'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useSalesStore } from '@/stores/sales'
 import {
-  TrendCharts, Plus, ShoppingCart, Money, Box, User,
-  Share, Trophy, Medal, Document, Search, Download
+  TrendCharts,
+  Plus,
+  Refresh,
+  ShoppingCart,
+  Money,
+  User,
+  Share,
+  Trophy,
+  Medal,
+  DataAnalysis,
+  DataLine,
+  PieChart,
+  List,
+  Phone,
+  Location
 } from '@element-plus/icons-vue'
-import { Chart, registerables } from 'chart.js'
 
-// 注册 Chart.js 组件
-Chart.register(...registerables)
-
-// 状态管理
+// Store
 const salesStore = useSalesStore()
 
 // 响应式数据
-const dateRange = ref([salesStore.dateRange.start, salesStore.dateRange.end])
-const filters = reactive({ ...salesStore.filters })
-const searchKeyword = ref('')
-const rankingType = ref('amount')
-const chartType = ref('line')
+const dateRange = ref([])
+const selectedAgentId = ref('')
+const selectedPaymentMethod = ref('')
+const selectedPaymentStatus = ref('')
+const chartType = ref('monthly')
+const currentPage = ref(1)
+const pageSize = ref(10)
 const showAddSaleDialog = ref(false)
-const showAddAgentDialog = ref(false)
-const salesChartRef = ref(null)
-const saleFormRef = ref()
-const agentFormRef = ref()
+const showViewDialog = ref(false)
+const currentViewRecord = ref({})
+const submitting = ref(false)
+const selectedRecords = ref([])
 
 // 表单数据
-const saleForm = reactive({
+const saleForm = ref({
   agentId: '',
-  productName: 'TangTaiRan小分子肽',
-  quantity: 1,
-  unitPrice: 299,
   customerName: '',
   customerPhone: '',
-  saleDate: new Date().toISOString().split('T')[0]
+  customerAddress: '',
+  products: [{ name: '', quantity: 1, price: 0 }],
+  paymentMethod: '',
+  paymentStatus: 'pending',
+  saleDate: new Date().toISOString().split('T')[0],
+  notes: ''
 })
 
-const agentForm = reactive({
-  name: '',
-  level: 4,
-  parentId: '',
-  phone: '',
-  email: '',
-  region: 'Sarawak',
-  city: ''
-})
+const saleFormRef = ref()
 
 // 表单验证规则
-const saleRules = {
-  agentId: [{ required: true, message: '请选择销售代理', trigger: 'change' }],
-  productName: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
-  quantity: [{ required: true, message: '请输入销售数量', trigger: 'blur' }],
-  unitPrice: [{ required: true, message: '请输入单价', trigger: 'blur' }],
+const saleFormRules = {
+  agentId: [{ required: true, message: '请选择代理', trigger: 'change' }],
   customerName: [{ required: true, message: '请输入客户姓名', trigger: 'blur' }],
-  customerPhone: [{ required: true, message: '请输入客户电话', trigger: 'blur' }]
+  customerPhone: [{ required: true, message: '请输入客户电话', trigger: 'blur' }],
+  products: [{ required: true, message: '请添加产品信息', trigger: 'change' }],
+  paymentMethod: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
+  paymentStatus: [{ required: true, message: '请选择支付状态', trigger: 'change' }],
+  saleDate: [{ required: true, message: '请选择销售日期', trigger: 'change' }]
 }
-
-const agentRules = {
-  name: [{ required: true, message: '请输入代理姓名', trigger: 'blur' }],
-  level: [{ required: true, message: '请选择代理级别', trigger: 'change' }],
-  phone: [{ required: true, message: '请输入手机号码', trigger: 'blur' }],
-  email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
-  region: [{ required: true, message: '请选择地区', trigger: 'change' }],
-  city: [{ required: true, message: '请输入城市', trigger: 'blur' }]
-}
-
-// 计算属性
-const salesStatistics = computed(() => salesStore.getSalesStatistics)
-const teamTree = computed(() => salesStore.getTeamTree)
-const salesRanking = computed(() => salesStore.getSalesRanking)
-const agentList = computed(() => Object.values(salesStore.filteredAgents))
-
-const sortedRanking = computed(() => {
-  return [...salesRanking.value].sort((a, b) => {
-    if (rankingType.value === 'amount') {
-      return b.totalAmount - a.totalAmount
-    } else {
-      return b.totalQuantity - a.totalQuantity
-    }
-  })
-})
-
-const filteredSalesRecords = computed(() => {
-  let records = Object.values(salesStore.filteredSalesRecords)
-  
-  // 搜索过滤
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    records = records.filter(record => 
-      record.customerName.toLowerCase().includes(keyword) ||
-      getAgentName(record.agentId).toLowerCase().includes(keyword)
-    )
-  }
-  
-  return records.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate))
-})
 
 // 树形组件配置
 const treeProps = {
@@ -497,185 +582,273 @@ const treeProps = {
   label: 'name'
 }
 
+// 计算属性
+const isLoading = computed(() => {
+  return salesStore.salesStatsLoading || salesStore.salesRecordsLoading || salesStore.agentsLoading
+})
+
+const salesStatsSummary = computed(() => salesStore.salesStatsSummary)
+const monthlySalesTrend = computed(() => salesStore.monthlySalesTrend)
+const paymentMethodDistribution = computed(() => salesStore.paymentMethodDistribution)
+
+const topAgents = computed(() => {
+  return salesStore.salesStats?.salesByAgent?.slice(0, 5) || []
+})
+
 // 方法
-const formatNumber = (num) => {
-  return num.toLocaleString()
+const getAgentLevelName = (level) => {
+  const levelNames = {
+    1: '州总代理',
+    2: '城市代理',
+    3: '销售员'
+  }
+  return levelNames[level] || '未知级别'
 }
 
 const getLevelTagType = (level) => {
-  const types = { 1: 'danger', 2: 'warning', 3: 'info', 4: 'success' }
-  return types[level] || ''
+  const tagTypes = {
+    1: 'danger',
+    2: 'warning',
+    3: 'success'
+  }
+  return tagTypes[level] || 'info'
 }
 
 const getAgentName = (agentId) => {
-  return salesStore.agents[agentId]?.name || '未知代理'
+  const agent = salesStore.agentsMap[agentId]
+  return agent?.name || '未知代理'
 }
 
-const getAgentLevel = (agentId) => {
-  return salesStore.agents[agentId]?.level || 0
+const getPaymentMethodName = (method) => {
+  const methodNames = {
+    cash: '现金',
+    bank_transfer: '银行转账',
+    alipay: '支付宝',
+    wechat: '微信支付',
+    credit_card: '信用卡'
+  }
+  return methodNames[method] || method
 }
 
-const getAgentSalesCount = (agentId) => {
-  return salesStore.getAgentSales(agentId).length
+const getPaymentStatusName = (status) => {
+  const statusNames = {
+    paid: '已支付',
+    pending: '待支付',
+    cancelled: '已取消'
+  }
+  return statusNames[status] || status
+}
+
+const getPaymentStatusType = (status) => {
+  const statusTypes = {
+    paid: 'success',
+    pending: 'warning',
+    cancelled: 'danger'
+  }
+  return statusTypes[status] || 'info'
+}
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY'
+  }).format(amount || 0)
 }
 
 const handleDateRangeChange = (dates) => {
   if (dates && dates.length === 2) {
-    salesStore.setDateRange(dates[0], dates[1])
+    salesStore.setFilters({
+      startDate: dates[0],
+      endDate: dates[1]
+    })
+  } else {
+    salesStore.setFilters({
+      startDate: null,
+      endDate: null
+    })
   }
 }
 
-const resetFilters = () => {
-  Object.assign(filters, {
-    region: '',
-    city: '',
-    agentLevel: '',
-    status: 'all'
-  })
-  salesStore.resetFilters()
-}
-
-const applyFilters = () => {
+const applyFilters = async () => {
+  const filters = {}
+  
+  if (selectedAgentId.value) {
+    filters.agentId = selectedAgentId.value
+  }
+  if (selectedPaymentMethod.value) {
+    filters.paymentMethod = selectedPaymentMethod.value
+  }
+  if (selectedPaymentStatus.value) {
+    filters.paymentStatus = selectedPaymentStatus.value
+  }
+  
   salesStore.setFilters(filters)
+  
+  // 重新获取数据
+  await Promise.all([
+    salesStore.fetchSalesRecords({ page: 1, limit: pageSize.value }),
+    salesStore.fetchSalesStats()
+  ])
+  
+  currentPage.value = 1
 }
 
-const handleNodeClick = (data) => {
-  console.log('选中代理:', data)
+const resetFilters = async () => {
+  dateRange.value = []
+  selectedAgentId.value = ''
+  selectedPaymentMethod.value = ''
+  selectedPaymentStatus.value = ''
+  
+  salesStore.clearFilters()
+  
+  // 重新获取数据
+  await Promise.all([
+    salesStore.fetchSalesRecords({ page: 1, limit: pageSize.value }),
+    salesStore.fetchSalesStats()
+  ])
+  
+  currentPage.value = 1
+}
+
+const refreshData = async () => {
+  await salesStore.initialize()
+}
+
+const handleAgentClick = (agent) => {
+  salesStore.setSelectedAgent(agent)
+  // 可以在这里添加更多的代理点击逻辑
+}
+
+const handleSelectionChange = (selection) => {
+  selectedRecords.value = selection
+}
+
+const handleSizeChange = async (size) => {
+  pageSize.value = size
+  await salesStore.fetchSalesRecords({ page: currentPage.value, limit: size })
+}
+
+const handleCurrentChange = async (page) => {
+  currentPage.value = page
+  await salesStore.fetchSalesRecords({ page, limit: pageSize.value })
+}
+
+const addProduct = () => {
+  saleForm.value.products.push({ name: '', quantity: 1, price: 0 })
+}
+
+const removeProduct = (index) => {
+  saleForm.value.products.splice(index, 1)
+}
+
+const calculateTotalAmount = () => {
+  return saleForm.value.products.reduce((total, product) => {
+    return total + (product.quantity * product.price)
+  }, 0)
 }
 
 const submitSaleForm = async () => {
+  if (!saleFormRef.value) return
+  
   try {
     await saleFormRef.value.validate()
-    const totalAmount = saleForm.quantity * saleForm.unitPrice
-    const agent = salesStore.agents[saleForm.agentId]
     
-    salesStore.addSaleRecord({
-      ...saleForm,
-      totalAmount,
-      region: agent.region,
-      city: agent.city
-    })
+    submitting.value = true
     
+    const saleData = {
+      ...saleForm.value,
+      totalAmount: calculateTotalAmount()
+    }
+    
+    await salesStore.createSaleRecord(saleData)
+    
+    ElMessage.success('销售记录添加成功')
     showAddSaleDialog.value = false
     resetSaleForm()
+    
   } catch (error) {
-    console.error('表单验证失败:', error)
-  }
-}
-
-const submitAgentForm = async () => {
-  try {
-    await agentFormRef.value.validate()
-    salesStore.addAgent(agentForm)
-    showAddAgentDialog.value = false
-    resetAgentForm()
-  } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('添加销售记录失败:', error)
+    ElMessage.error(error.message || '添加销售记录失败')
+  } finally {
+    submitting.value = false
   }
 }
 
 const resetSaleForm = () => {
-  Object.assign(saleForm, {
+  saleForm.value = {
     agentId: '',
-    productName: 'TangTaiRan小分子肽',
-    quantity: 1,
-    unitPrice: 299,
     customerName: '',
     customerPhone: '',
-    saleDate: new Date().toISOString().split('T')[0]
-  })
+    customerAddress: '',
+    products: [{ name: '', quantity: 1, price: 0 }],
+    paymentMethod: '',
+    paymentStatus: 'pending',
+    saleDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  }
+  if (saleFormRef.value) {
+    saleFormRef.value.clearValidate()
+  }
 }
 
-const resetAgentForm = () => {
-  Object.assign(agentForm, {
-    name: '',
-    level: 4,
-    parentId: '',
-    phone: '',
-    email: '',
-    region: 'Sarawak',
-    city: ''
-  })
+const handleCloseAddSaleDialog = (done) => {
+  resetSaleForm()
+  done()
+}
+
+const viewSaleRecord = (record) => {
+  currentViewRecord.value = { ...record }
+  showViewDialog.value = true
 }
 
 const editSaleRecord = (record) => {
-  Object.assign(saleForm, record)
-  showAddSaleDialog.value = true
+  // TODO: 实现编辑功能
+  ElMessage.info('编辑功能开发中...')
 }
 
-const deleteSaleRecord = async (saleId) => {
+const deleteSaleRecord = async (record) => {
   try {
     await ElMessageBox.confirm('确定要删除这条销售记录吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
       type: 'warning'
     })
-    salesStore.deleteSaleRecord(saleId)
-  } catch {
-    // 用户取消删除
+    
+    await salesStore.deleteSaleRecord(record._id)
+    ElMessage.success('删除成功')
+    
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除销售记录失败:', error)
+      ElMessage.error(error.message || '删除失败')
+    }
   }
 }
 
 const exportData = () => {
+  // TODO: 实现导出功能
   ElMessage.info('导出功能开发中...')
 }
 
-// 初始化销售趋势图表
-const initSalesChart = () => {
-  if (!salesChartRef.value) return
-  
-  const ctx = salesChartRef.value.getContext('2d')
-  const monthlyStats = salesStatistics.value.monthly
-  
-  const labels = Object.keys(monthlyStats).sort()
-  const data = labels.map(month => monthlyStats[month].amount)
-  
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: '销售金额',
-        data: data,
-        borderColor: '#409EFF',
-        backgroundColor: 'rgba(64, 158, 255, 0.1)',
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return '¥' + value.toLocaleString()
-            }
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
-    }
-  })
-}
-
 // 生命周期
-onMounted(() => {
-  nextTick(() => {
-    initSalesChart()
+onMounted(async () => {
+  await salesStore.initialize()
+})
+
+// 监听分页变化
+watch([currentPage, pageSize], async () => {
+  await salesStore.fetchSalesRecords({ 
+    page: currentPage.value, 
+    limit: pageSize.value 
   })
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .sales-container {
   padding: 20px;
   background-color: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
 }
 
 .page-header {
@@ -683,330 +856,380 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
-  .header-left {
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 8px 0;
-    }
-    
-    .page-subtitle {
-      color: #909399;
-      margin: 0;
-    }
-  }
-  
-  .header-actions {
-    display: flex;
-    gap: 12px;
-  }
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-subtitle {
+  color: #909399;
+  margin: 0;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .filter-card {
   margin-bottom: 20px;
-  
-  .filter-row {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      label {
-        font-weight: 500;
-        color: #606266;
-        white-space: nowrap;
-      }
-    }
-    
-    .filter-actions {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-    }
-  }
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.filter-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .stats-overview {
   margin-bottom: 20px;
-  
-  .stat-card {
-    .stat-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        color: white;
-        
-        &.total-sales {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        &.total-amount {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        &.total-quantity {
-          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        
-        &.total-agents {
-          background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-      }
-      
-      .stat-info {
-        .stat-value {
-          font-size: 24px;
-          font-weight: 600;
-          color: #303133;
-          line-height: 1;
-        }
-        
-        .stat-label {
-          font-size: 14px;
-          color: #909399;
-          margin-top: 4px;
-        }
-      }
-    }
-  }
+}
+
+.stat-card {
+  height: 100px;
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  font-size: 24px;
+  color: white;
+}
+
+.stat-icon.total-sales {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.total-amount {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon.average-order {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.total-agents {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #909399;
 }
 
 .main-content-row {
   margin-bottom: 20px;
 }
 
-.team-tree-card {
-  height: 350px;
-  margin-bottom: 20px;
-  
-  .team-tree-container {
-    height: 270px;
-    overflow-y: auto;
-    
-    .tree-node {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 6px 0;
-      
-      .node-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        
-        .node-avatar {
-          background: #409EFF;
-          color: white;
-          font-size: 12px;
-        }
-        
-        .node-name {
-          font-weight: 500;
-          font-size: 14px;
-        }
-      }
-      
-      .node-stats {
-        .stat-item {
-          font-size: 12px;
-          color: #909399;
-        }
-      }
-    }
-  }
-}
-
-.ranking-card {
-  height: 350px;
-  
-  .ranking-list {
-    height: 270px;
-    overflow-y: auto;
-    
-    .ranking-item {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        background-color: #f5f7fa;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      
-      &.top-three {
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        
-        &:first-child {
-          background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-          color: white;
-        }
-      }
-      
-      .rank-number {
-        width: 35px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        
-        .gold {
-          color: #FFD700;
-          font-size: 18px;
-        }
-        
-        .silver {
-          color: #C0C0C0;
-          font-size: 16px;
-        }
-        
-        .bronze {
-          color: #CD7F32;
-          font-size: 14px;
-        }
-        
-        .rank-text {
-          font-weight: 600;
-          font-size: 14px;
-        }
-      }
-      
-      .agent-avatar {
-        margin: 0 10px;
-        background: #409EFF;
-        color: white;
-      }
-      
-      .agent-info {
-        flex: 1;
-        
-        .agent-name {
-          font-weight: 500;
-          margin-bottom: 2px;
-          font-size: 14px;
-        }
-        
-        .agent-level {
-          font-size: 11px;
-          color: #909399;
-        }
-      }
-      
-      .agent-stats {
-        text-align: right;
-        
-        .stat-value {
-          font-weight: 600;
-          font-size: 14px;
-          color: #303133;
-        }
-        
-        .stat-label {
-          font-size: 11px;
-          color: #909399;
-        }
-      }
-    }
-  }
-}
-
-.chart-card {
-  height: 720px;
-  
-  .chart-container {
-    height: 620px;
-    position: relative;
-    padding: 20px;
-  }
-  
-  .chart-actions {
-    display: flex;
-    align-items: center;
-  }
-}
-
+.team-tree-card,
+.ranking-card,
+.charts-card,
 .table-card {
-  margin-top: 20px;
-  
-  .agent-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .amount-text {
-    font-weight: 600;
-    color: #E6A23C;
-  }
+  margin-bottom: 20px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
-  .card-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-  }
-  
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
 }
 
-// 响应式设计
-@media (max-width: 768px) {
-  .sales-container {
-    padding: 10px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .filter-row {
-    flex-direction: column;
-    align-items: flex-start !important;
-    
-    .filter-actions {
-      margin-left: 0 !important;
-      width: 100%;
-    }
-  }
-  
-  .stats-overview {
-    :deep(.el-col) {
-      margin-bottom: 16px;
-    }
-  }
+.card-title {
+  font-weight: 600;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-tree-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.node-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.node-avatar {
+  margin-right: 12px;
+  background-color: #409eff;
+  color: white;
+}
+
+.node-details {
+  flex: 1;
+}
+
+.node-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.node-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.node-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ranking-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+.ranking-item.top-three {
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.rank-number {
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.rank-number .gold {
+  color: #ffd700;
+  font-size: 20px;
+}
+
+.rank-number .silver {
+  color: #c0c0c0;
+  font-size: 18px;
+}
+
+.rank-number .bronze {
+  color: #cd7f32;
+  font-size: 16px;
+}
+
+.rank-text {
+  font-weight: 600;
+  color: #606266;
+}
+
+.agent-avatar {
+  margin-right: 12px;
+  background-color: #409eff;
+  color: white;
+}
+
+.agent-info {
+  flex: 1;
+}
+
+.agent-name {
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.agent-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.sales-amount {
+  font-weight: 600;
+  color: #f56c6c;
+}
+
+.sales-count {
+  color: #909399;
+}
+
+.chart-container {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-placeholder,
+.no-chart-data {
+  text-align: center;
+  color: #909399;
+}
+
+.chart-placeholder .el-icon,
+.no-chart-data .el-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #dcdfe6;
+}
+
+.trend-data,
+.payment-data {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.trend-item,
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.trend-item:last-child,
+.payment-item:last-child {
+  border-bottom: none;
+}
+
+.month,
+.method {
+  font-weight: 500;
+  color: #303133;
+}
+
+.amount {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.orders,
+.percentage {
+  color: #909399;
+  font-size: 12px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.products-container {
+  width: 100%;
+}
+
+.product-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.product-item {
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.product-item:last-child {
+  border-bottom: none;
+}
+
+.no-data {
+  text-align: center;
+  color: #909399;
+  padding: 20px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

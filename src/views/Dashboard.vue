@@ -52,7 +52,7 @@
             <el-icon size="24"><Box /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ dataStore.inventoryStats.total }}</div>
+            <div class="stat-value">{{ dataStore.inventoryStats?.total || 0 }}</div>
             <div class="stat-label">库存状态</div>
             <div class="stat-detail">
               低库存: {{ dataStore.inventoryStats.lowStock }} | 缺货: {{ dataStore.inventoryStats.outOfStock }}
@@ -71,7 +71,7 @@
             <el-icon size="24"><Van /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ logisticsStats.total }}</div>
+            <div class="stat-value">{{ logisticsStats?.total || 0 }}</div>
             <div class="stat-label">物流订单</div>
             <div class="stat-detail">
               待发货: {{ logisticsStats.pending }} | 运输中: {{ logisticsStats.transit }}
@@ -119,9 +119,14 @@
       <template #header>
         <div class="card-header">
           <span class="card-title">最近交易</span>
-          <el-button type="primary" link @click="$router.push('/transactions')">
-            查看全部
-          </el-button>
+          <div>
+            <el-button type="success" size="small" @click="openAddTransactionDialog">
+              <el-icon><Plus /></el-icon>添加交易
+            </el-button>
+            <el-button type="primary" link @click="$router.push('/transactions')">
+              查看全部
+            </el-button>
+          </div>
         </div>
       </template>
       <el-table :data="recentTransactions" style="width: 100%" stripe>
@@ -177,6 +182,9 @@ import {
 } from '@element-plus/icons-vue'
 import { Chart, registerables } from 'chart.js'
 import AddTransactionDialog from '@/components/AddTransactionDialog.vue'
+
+// 添加交易对话框显示状态
+const showAddTransaction = ref(false)
 
 // 注册 Chart.js 组件
 Chart.register(...registerables)
@@ -698,10 +706,17 @@ const updateChart = () => {
   renderChart(data, chartType.value)
 }
 
+// 打开添加交易对话框
+const openAddTransactionDialog = () => {
+  showAddTransaction.value = true
+}
+
 // 处理交易添加成功
 const handleTransactionAdded = () => {
   // 刷新数据
   console.log('交易添加成功')
+  // 更新图表
+  updateChart()
 }
 
 onMounted(async () => {

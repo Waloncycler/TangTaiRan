@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { login, logout, getProfile, changePassword } = require('../controllers/auth.controller');
+const { login, logout, getProfile, changePassword, verifyToken } = require('../controllers/auth.controller');
 const { authMiddleware } = require('../middleware/auth.middleware');
 
 /**
@@ -101,6 +101,7 @@ const { authMiddleware } = require('../middleware/auth.middleware');
  */
 // 公开路由
 router.post('/login', login);
+router.get('/verify', verifyToken);
 
 // 需要认证的路由
 

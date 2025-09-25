@@ -1,4 +1,7 @@
 const Transaction = require('../models/transaction.model');
+const Sale = require('../models/sale.model');
+const Agent = require('../models/agent.model');
+const { getAccessibleAgentIds } = require('../utils/agentUtils');
 const { errorHandler } = require('../middleware/error.middleware');
 
 /**
@@ -8,18 +11,21 @@ const { errorHandler } = require('../middleware/error.middleware');
  */
 exports.createTransaction = async (req, res, next) => {
   try {
-    const { type, category, amount, date, description, paymentMethod, relatedTo } = req.body;
+    const { type, category, amount, date, note, paymentMethod } = req.body;
+
+    // 生成唯一ID
+    const id = Date.now();
 
     // 创建交易记录
     const transaction = await Transaction.create({
+      id,
       type,
       category,
       amount,
-      date,
-      description,
+      date: date || new Date(),
+      note: note || '',
       paymentMethod,
-      relatedTo,
-      createdBy: req.user._id
+      createdBy: req.user.id
     });
 
     res.status(201).json({
@@ -91,20 +97,13 @@ exports.getAllTransactions = async (req, res, next) => {
     const transactions = await Transaction.find(filter)
       .sort({ date: -1 })
       .skip(startIndex)
-      .limit(limit)
-      .populate('createdBy', 'username');
+      .limit(limit);
 
     // 获取总记录数
     const total = await Transaction.countDocuments(filter);
 
-    res.status(200).json({
-      success: true,
-      count: transactions.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      data: transactions
-    });
+    // 直接返回数组格式，与前端期望一致
+    res.status(200).json(transactions);
   } catch (error) {
     next(error);
   }
@@ -117,7 +116,7 @@ exports.getAllTransactions = async (req, res, next) => {
  */
 exports.getTransactionById = async (req, res, next) => {
   try {
-    const transaction = await Transaction.findById(req.params.id).populate('createdBy', 'username');
+    const transaction = await Transaction.findOne({ id: req.params.id });
     
     if (!transaction) {
       return res.status(404).json({
@@ -142,9 +141,9 @@ exports.getTransactionById = async (req, res, next) => {
  */
 exports.updateTransaction = async (req, res, next) => {
   try {
-    const { type, category, amount, date, description, paymentMethod, relatedTo } = req.body;
+    const { type, category, amount, date, note, paymentMethod } = req.body;
 
-    let transaction = await Transaction.findById(req.params.id);
+    let transaction = await Transaction.findOne({ id: req.params.id });
 
     if (!transaction) {
       return res.status(404).json({
@@ -154,11 +153,11 @@ exports.updateTransaction = async (req, res, next) => {
     }
 
     // 更新交易记录
-    transaction = await Transaction.findByIdAndUpdate(
-      req.params.id,
-      { type, category, amount, date, description, paymentMethod, relatedTo },
+    transaction = await Transaction.findOneAndUpdate(
+      { id: req.params.id },
+      { type, category, amount, date, note, paymentMethod },
       { new: true, runValidators: true }
-    ).populate('createdBy', 'username');
+    );
 
     res.status(200).json({
       success: true,
@@ -176,7 +175,8 @@ exports.updateTransaction = async (req, res, next) => {
  */
 exports.deleteTransaction = async (req, res, next) => {
   try {
-    const transaction = await Transaction.findById(req.params.id);
+    // 使用id字段查找，而不是_id
+    const transaction = await Transaction.findOne({ id: req.params.id });
 
     if (!transaction) {
       return res.status(404).json({
@@ -377,8 +377,7 @@ exports.getFinancialOverview = async (req, res, next) => {
     // 最近的交易记录
     const recentTransactions = await Transaction.find()
       .sort({ date: -1 })
-      .limit(5)
-      .populate('createdBy', 'username');
+      .limit(5);
     
     res.status(200).json({
       success: true,
@@ -435,61 +434,7 @@ exports.getFinancialOverview = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    批量导入交易记录
- * @route   POST /api/transactions/import
- * @access  Private/Admin
- */
-exports.importTransactions = async (req, res, next) => {
-  try {
-    const { transactions } = req.body;
-    
-    if (!Array.isArray(transactions) || transactions.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的交易数据格式'
-      });
-    }
-    
-    // 添加创建者信息
-    const transactionsWithCreator = transactions.map(transaction => ({
-      ...transaction,
-      createdBy: req.user._id
-    }));
-    
-    // 批量创建交易记录
-    const result = await Transaction.insertMany(transactionsWithCreator, { 
-      ordered: false,
-      rawResult: true
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: `成功导入 ${result.insertedCount} 条交易记录`,
-      data: {
-        insertedCount: result.insertedCount
-      }
-    });
-  } catch (error) {
-    // 处理批量插入错误
-    if (error.name === 'BulkWriteError') {
-      return res.status(400).json({
-        success: false,
-        message: '部分交易记录导入失败',
-        data: {
-          insertedCount: error.result.nInserted,
-          failedCount: error.writeErrors.length,
-          errors: error.writeErrors.slice(0, 5).map(err => ({
-            index: err.index,
-            message: err.errmsg || '数据验证失败'
-          }))
-        }
-      });
-    }
-    
-    next(error);
-  }
-};
+
 
 /**
  * @desc    导出交易记录
@@ -520,8 +465,7 @@ exports.exportTransactions = async (req, res, next) => {
     
     // 执行查询
     const transactions = await Transaction.find(filter)
-      .sort({ date: -1 })
-      .populate('createdBy', 'username');
+      .sort({ date: -1 });
     
     // 格式化数据用于导出
     const formattedTransactions = transactions.map(transaction => ({
@@ -545,4 +489,74 @@ exports.exportTransactions = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * @desc    获取账单概览（包含代理相关数据）
+ * @route   GET /api/transactions/billing-overview
+ * @access  Private
+ */
+const getBillingOverview = async (req, res, next) => {
+  try {
+    const { role, agentId } = req.user;
+    
+    // 获取可访问的代理ID列表
+    const accessibleAgentIds = await getAccessibleAgentIds(role, agentId);
+    
+    // 获取日期范围（默认当前月）
+    const { startDate, endDate } = req.query;
+    const dateRange = {};
+    if (startDate) dateRange.start = startDate;
+    if (endDate) dateRange.end = endDate;
+    
+    // 获取销售收入统计
+    const salesIncome = await Transaction.getSalesIncomeByAgent(accessibleAgentIds, dateRange);
+    
+    // 获取总收入和支出
+    const dateQuery = {};
+    if (dateRange.start || dateRange.end) {
+      dateQuery.date = {};
+      if (dateRange.start) dateQuery.date.$gte = new Date(dateRange.start);
+      if (dateRange.end) dateQuery.date.$lte = new Date(dateRange.end);
+    }
+    
+    const [totalIncomeResult] = await Transaction.calculateTotalIncome(dateQuery);
+    const [totalExpenseResult] = await Transaction.calculateTotalExpense(dateQuery);
+    
+    const totalIncome = totalIncomeResult ? totalIncomeResult.total : 0;
+    const totalExpense = totalExpenseResult ? totalExpenseResult.total : 0;
+    
+    // 按类别统计
+    const incomeByCategory = await Transaction.calculateByCategory('income', dateQuery);
+    const expenseByCategory = await Transaction.calculateByCategory('expense', dateQuery);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        overview: {
+          totalIncome,
+          totalExpense,
+          netIncome: totalIncome - totalExpense
+        },
+        salesIncome,
+        incomeByCategory,
+        expenseByCategory
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+module.exports = {
+  getTransactionStats: exports.getTransactionStats,
+  getFinancialOverview: exports.getFinancialOverview,
+  getAllTransactions: exports.getAllTransactions,
+  createTransaction: exports.createTransaction,
+  getTransactionById: exports.getTransactionById,
+  updateTransaction: exports.updateTransaction,
+  deleteTransaction: exports.deleteTransaction,
+  exportTransactions: exports.exportTransactions,
+  getBillingOverview
 };

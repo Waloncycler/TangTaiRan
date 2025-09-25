@@ -112,49 +112,7 @@ router.get('/stats', authMiddleware, authorizeRoles('admin'), transactionControl
  */
 router.get('/overview', authMiddleware, authorizeRoles('admin'), transactionController.getFinancialOverview);
 
-/**
- * @swagger
- * /api/transactions/import:
- *   post:
- *     summary: 批量导入交易记录
- *     description: 通过CSV或Excel文件批量导入交易记录
- *     tags: [Transactions]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: 包含交易记录的CSV或Excel文件
- *     responses:
- *       200:
- *         description: 成功导入交易记录
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                   description: 导入的记录数量
- *       400:
- *         description: 无效的请求
- *       401:
- *         description: 未授权
- *       403:
- *         description: 禁止访问
- *       500:
- *         description: 服务器错误
- */
-router.post('/import', authMiddleware, authorizeRoles('admin'), transactionController.importTransactions);
+
 
 /**
  * @swagger

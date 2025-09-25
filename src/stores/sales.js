@@ -2,105 +2,26 @@ import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { useDataStore } from './data'
 import { useAuthStore } from './auth'
+import api from '@/api'
 
 export const useSalesStore = defineStore('sales', {
   state: () => ({
     // 代理数据
-    agents: {
-      'agent001': {
-        id: 'agent001',
-        name: 'Ahmad Rahman',
-        level: 1, // 1:州总代理, 2:城市代理, 3:团队长, 4:销售员
-        parentId: null,
-        phone: '+60123456001',
-        email: 'ahmad.rahman@example.com',
-        joinDate: '2024-01-01',
-        status: 'active',
-        region: 'Sarawak',
-        city: 'Kuching'
-      },
-      'agent002': {
-        id: 'agent002',
-        name: 'Siti Nurhaliza',
-        level: 2,
-        parentId: 'agent001',
-        phone: '+60123456002',
-        email: 'siti.nurhaliza@example.com',
-        joinDate: '2024-01-15',
-        status: 'active',
-        region: 'Sarawak',
-        city: 'Miri'
-      },
-      'agent003': {
-        id: 'agent003',
-        name: 'Lim Wei Ming',
-        level: 3,
-        parentId: 'agent002',
-        phone: '+60123456003',
-        email: 'lim.weiming@example.com',
-        joinDate: '2024-02-01',
-        status: 'active',
-        region: 'Sarawak',
-        city: 'Bintulu'
-      },
-      'agent004': {
-        id: 'agent004',
-        name: 'Raj Kumar',
-        level: 4,
-        parentId: 'agent003',
-        phone: '+60123456004',
-        email: 'raj.kumar@example.com',
-        joinDate: '2024-02-15',
-        status: 'active',
-        region: 'Sarawak',
-        city: 'Sibu'
-      }
-    },
+    agents: {},
     
     // 销售记录
-    salesRecords: {
-      'sale001': {
-        id: 'sale001',
-        agentId: 'agent004',
-        productName: 'TangTaiRan小分子肽',
-        quantity: 10,
-        unitPrice: 299,
-        totalAmount: 2990,
-        customerName: 'Tan Ah Kow',
-        customerPhone: '+60198765001',
-        saleDate: '2025-01-15',
-        status: 'completed',
-        region: 'Sarawak',
-        city: 'Sibu'
-      },
-      'sale002': {
-        id: 'sale002',
-        agentId: 'agent004',
-        productName: 'TangTaiRan小分子肽',
-        quantity: 5,
-        unitPrice: 299,
-        totalAmount: 1495,
-        customerName: 'Wong Mei Ling',
-        customerPhone: '+60198765002',
-        saleDate: '2025-01-20',
-        status: 'completed',
-        region: 'Sarawak',
-        city: 'Sibu'
-      },
-      'sale003': {
-        id: 'sale003',
-        agentId: 'agent003',
-        productName: 'TangTaiRan小分子肽',
-        quantity: 20,
-        unitPrice: 299,
-        totalAmount: 5980,
-        customerName: 'Fatimah Abdullah',
-        customerPhone: '+60198765003',
-        saleDate: '2025-01-25',
-        status: 'completed',
-        region: 'Sarawak',
-        city: 'Bintulu'
-      }
+    salesRecords: {},
+    
+    // 加载状态
+    loading: {
+      agents: false,
+      sales: false
+    },
+    
+    // 错误信息
+    error: {
+      agents: null,
+      sales: null
     },
     
     // 当前选中的时间范围
@@ -173,8 +94,7 @@ export const useSalesStore = defineStore('sales', {
       const levelNames = {
         1: '州总代理',
         2: '城市代理', 
-        3: '团队长',
-        4: '销售员'
+        3: '销售员'
       }
       return levelNames[level] || '未知'
     },
@@ -329,55 +249,175 @@ export const useSalesStore = defineStore('sales', {
   },
   
   actions: {
-    // 添加代理
-    addAgent(agentData) {
-      const id = 'agent' + String(Date.now()).slice(-6)
-      const agent = {
-        id,
-        ...agentData,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'active'
+    // 初始化 - 加载代理数据
+    async fetchAgents(options = {}) {
+      this.loading.agents = true
+      this.error.agents = null
+      
+      try {
+        // 添加强制刷新参数
+        const params = options.forceRefresh ? { _force: Date.now() } : {};
+        const response = await api.agents.getAll(params)
+        
+        console.log('获取到的代理数据:', response)
+        
+        // 将数组转换为对象，以ID为键
+        const agentsObj = {}
+        if (response && response.data && Array.isArray(response.data)) {
+          response.data.forEach(agent => {
+            // 使用agent.id作为键，而不是_id
+            agentsObj[agent.id] = {
+              ...agent,
+              // 确保id字段存在
+              id: agent.id || agent._id,
+              // 添加region和city字段，如果不存在
+              region: agent.region || '未知区域',
+              city: agent.city || '未知城市'
+            }
+          })
+          console.log('处理后的代理数据:', agentsObj)
+        } else {
+          console.warn('获取代理数据格式不正确，使用空对象')
+        }
+        
+        this.agents = agentsObj
+      } catch (error) {
+        console.error('获取代理数据失败:', error)
+        this.error.agents = '获取代理数据失败'
+        ElMessage.error('获取代理数据失败')
+      } finally {
+        this.loading.agents = false
       }
-      this.agents[id] = agent
-      ElMessage.success('代理添加成功')
-      return id
+    },
+    
+    // 初始化 - 加载销售记录
+    async fetchSales(params = {}) {
+      this.loading.sales = true
+      this.error.sales = null
+      
+      // 合并日期范围和筛选条件
+      const queryParams = {
+        ...params,
+        startDate: this.dateRange.start || undefined,
+        endDate: this.dateRange.end || undefined,
+        ...this.filters,
+        // 添加强制刷新参数
+        _force: params.forceRefresh ? Date.now() : undefined
+      }
+      
+      try {
+        const response = await api.sales.getAll(queryParams)
+        
+        // 将数组转换为对象，以ID为键
+        const salesObj = {}
+        if (response && response.data && Array.isArray(response.data)) {
+          response.data.forEach(sale => {
+            salesObj[sale._id] = sale
+          })
+        } else {
+          console.warn('获取销售记录格式不正确，使用空对象')
+        }
+        
+        this.salesRecords = salesObj
+      } catch (error) {
+        console.error('获取销售记录失败:', error)
+        this.error.sales = '获取销售记录失败'
+        ElMessage.error('获取销售记录失败')
+      } finally {
+        this.loading.sales = false
+      }
+    },
+    
+    // 添加代理
+    async addAgent(agentData) {
+      try {
+        const response = await api.agents.create(agentData)
+        
+        // 确保response有id属性
+        const agentId = response.id || response._id
+        
+        if (!agentId) {
+          console.error('添加代理返回的数据缺少ID')
+          ElMessage.error('添加代理失败：返回数据格式错误')
+          return null
+        }
+        
+        // 更新本地存储 - 确保使用响应式更新
+        this.agents = {
+          ...this.agents,
+          [agentId]: {
+            ...response,
+            id: agentId // 确保id字段存在
+          }
+        }
+        
+        ElMessage.success('代理添加成功')
+        return agentId
+      } catch (error) {
+        console.error('添加代理失败:', error)
+        ElMessage.error('添加代理失败')
+        return null
+      }
     },
     
     // 获取代理层级关系（当前代理及其所有下属代理）
-    getAgentHierarchy(agentId) {
-      if (!this.agents[agentId]) return []
-      
-      // 递归获取所有下属代理
-      const getAllSubordinates = (id) => {
-        let result = [id]
+    async getAgentHierarchy(agentId) {
+      try {
+        // 先检查本地是否有该代理
+        if (!this.agents[agentId]) {
+          // 尝试从API获取
+          const agent = await api.agents.getById(agentId)
+          if (!agent) return []
+          
+          // 更新本地存储
+          this.agents[agent.id] = agent
+        }
         
-        // 查找直接下属
-        const directSubordinates = Object.values(this.agents)
-          .filter(agent => agent.parentId === id)
-          .map(agent => agent.id)
+        // 递归获取所有下属代理
+        const getAllSubordinates = (id) => {
+          let result = [id]
+          
+          // 查找直接下属
+          const directSubordinates = Object.values(this.agents)
+            .filter(agent => agent.parentId === id)
+            .map(agent => agent.id)
+          
+          // 递归获取每个直接下属的下属
+          directSubordinates.forEach(subId => {
+            result = result.concat(getAllSubordinates(subId))
+          })
+          
+          return result
+        }
         
-        // 递归获取每个直接下属的下属
-        directSubordinates.forEach(subId => {
-          result = result.concat(getAllSubordinates(subId))
-        })
-        
-        return result
+        return getAllSubordinates(agentId)
+      } catch (error) {
+        console.error('获取代理层级关系失败:', error)
+        ElMessage.error('获取代理层级关系失败')
+        return []
       }
-      
-      return getAllSubordinates(agentId)
     },
     
     // 更新代理信息
-    updateAgent(agentId, agentData) {
-      if (this.agents[agentId]) {
-        this.agents[agentId] = { ...this.agents[agentId], ...agentData }
+    async updateAgent(agentId, agentData) {
+      try {
+        const response = await api.agents.update(agentId, agentData)
+        
+        // 更新本地存储
+        this.agents[agentId] = { ...this.agents[agentId], ...response }
+        
         ElMessage.success('代理信息更新成功')
+        return true
+      } catch (error) {
+        console.error('更新代理信息失败:', error)
+        ElMessage.error('更新代理信息失败')
+        return false
       }
     },
     
     // 删除代理
-    deleteAgent(agentId) {
-      if (this.agents[agentId]) {
+    async deleteAgent(agentId) {
+      try {
         // 检查是否有下级代理
         const hasSubAgents = Object.values(this.agents).some(agent => agent.parentId === agentId)
         if (hasSubAgents) {
@@ -385,126 +425,228 @@ export const useSalesStore = defineStore('sales', {
           return false
         }
         
+        await api.agents.delete(agentId)
+        
+        // 更新本地存储
         delete this.agents[agentId]
+        
         ElMessage.success('代理删除成功')
         return true
+      } catch (error) {
+        console.error('删除代理失败:', error)
+        ElMessage.error('删除代理失败')
+        return false
       }
-      return false
     },
     
     // 添加销售记录
-    addSaleRecord(saleData) {
-      const id = 'sale' + String(Date.now()).slice(-6)
-      const sale = {
-        id,
-        ...saleData,
-        saleDate: saleData.saleDate || new Date().toISOString().split('T')[0],
-        status: 'completed'
+    async addSaleRecord(saleData) {
+      try {
+        // 确保有销售日期
+        const dataToSend = {
+          ...saleData,
+          saleDate: saleData.saleDate || new Date().toISOString().split('T')[0],
+          status: saleData.status || 'completed'
+        }
+        
+        const response = await api.sales.create(dataToSend)
+        
+        // 更新本地存储
+        this.salesRecords[response.id] = response
+        
+        // 同步到账单管理
+        await this.syncSaleToTransaction(response)
+        
+        ElMessage.success('销售记录添加成功')
+        return response.id
+      } catch (error) {
+        console.error('添加销售记录失败:', error)
+        ElMessage.error('添加销售记录失败')
+        return null
       }
-      this.salesRecords[id] = sale
-      
-      // 同步到账单管理
-      this.syncSaleToTransaction(sale)
-      
-      ElMessage.success('销售记录添加成功')
-      return id
     },
     
     // 同步销售记录到账单管理
-    syncSaleToTransaction(sale) {
-      const dataStore = useDataStore()
-      
-      // 创建收入交易记录
-      const transaction = {
-        type: 'income',
-        amount: sale.totalAmount,
-        category: 'sales',
-        date: sale.saleDate,
-        note: `销售收入 - ${sale.productName} x${sale.quantity} (客户: ${sale.customerName})`,
-        metadata: {
-          sourceType: 'sales',
-          sourceId: sale.id,
-          agentId: sale.agentId,
-          productName: sale.productName,
-          customerName: sale.customerName,
-          region: sale.region,
-          city: sale.city
+    async syncSaleToTransaction(sale) {
+      try {
+        const dataStore = useDataStore()
+        
+        // 创建收入交易记录
+        const transaction = {
+          type: 'income',
+          amount: sale.totalAmount,
+          category: 'sales',
+          date: sale.saleDate,
+          note: `销售收入 - ${sale.productName} x${sale.quantity} (客户: ${sale.customerName})`,
+          metadata: {
+            sourceType: 'sales',
+            sourceId: sale.id,
+            agentId: sale.agentId,
+            productName: sale.productName,
+            customerName: sale.customerName,
+            region: sale.region,
+            city: sale.city
+          }
         }
+        
+        await dataStore.addTransaction(transaction)
+        return true
+      } catch (error) {
+        console.error('同步销售记录到账单失败:', error)
+        return false
       }
-      
-      dataStore.addTransaction(transaction)
      },
      
      // 删除销售对应的账单记录
-     removeSaleTransaction(saleId) {
-       const dataStore = useDataStore()
-       
-       // 查找并删除对应的交易记录
-       const transactions = dataStore.transactions
-       const transactionToDelete = transactions.find(t => 
-         t.metadata && t.metadata.sourceType === 'sales' && t.metadata.sourceId === saleId
-       )
-       
-       if (transactionToDelete) {
-         dataStore.deleteTransaction(transactionToDelete.id)
+     async removeSaleTransaction(saleId) {
+       try {
+         const dataStore = useDataStore()
+         
+         // 查找并删除对应的交易记录
+         const transactions = dataStore.transactions
+         const transactionToDelete = transactions.find(t => 
+           t.metadata && t.metadata.sourceType === 'sales' && t.metadata.sourceId === saleId
+         )
+         
+         if (transactionToDelete) {
+           await dataStore.deleteTransaction(transactionToDelete.id)
+         }
+         return true
+       } catch (error) {
+         console.error('删除销售对应账单记录失败:', error)
+         return false
        }
      },
      
      // 更新销售记录
-    updateSaleRecord(saleId, saleData) {
-      if (this.salesRecords[saleId]) {
-        this.salesRecords[saleId] = { ...this.salesRecords[saleId], ...saleData }
+    async updateSaleRecord(saleId, saleData) {
+      try {
+        const response = await api.sales.update(saleId, saleData)
+        
+        // 更新本地存储
+        this.salesRecords[saleId] = { ...this.salesRecords[saleId], ...response }
+        
         ElMessage.success('销售记录更新成功')
+        return true
+      } catch (error) {
+        console.error('更新销售记录失败:', error)
+        ElMessage.error('更新销售记录失败')
+        return false
       }
     },
     
     // 删除销售记录
-    deleteSaleRecord(saleId) {
-      if (this.salesRecords[saleId]) {
-        // 删除对应的账单记录
-        this.removeSaleTransaction(saleId)
+    async deleteSaleRecord(saleId) {
+      try {
+        // 先删除对应的账单记录
+        await this.removeSaleTransaction(saleId)
         
+        // 删除销售记录
+        await api.sales.delete(saleId)
+        
+        // 更新本地存储
         delete this.salesRecords[saleId]
+        
         ElMessage.success('销售记录删除成功')
         return true
+      } catch (error) {
+        console.error('删除销售记录失败:', error)
+        ElMessage.error('删除销售记录失败')
+        return false
       }
-      return false
     },
     
     // 设置时间范围
-    setDateRange(start, end) {
+    async setDateRange(start, end) {
       this.dateRange = { start, end }
+      // 更新数据
+      await this.fetchSales()
     },
     
     // 设置筛选条件
-    setFilters(filters) {
+    async setFilters(filters) {
       this.filters = { ...this.filters, ...filters }
+      // 更新数据
+      await this.fetchSales()
     },
     
     // 重置筛选条件
-    resetFilters() {
+    async resetFilters() {
       this.filters = {
         region: '',
         city: '',
         agentLevel: '',
         status: 'all'
       }
+      // 更新数据
+      await this.fetchSales()
+    },
+    
+    // 初始化数据
+    async initialize() {
+      try {
+        console.log('开始初始化销售数据...')
+        
+        // 加载代理数据
+        await this.fetchAgents({forceRefresh: true})
+        console.log('代理数据加载完成:', Object.keys(this.agents).length)
+        
+        // 加载销售记录
+        await this.fetchSales({forceRefresh: true})
+        console.log('销售记录加载完成:', Object.keys(this.salesRecords).length)
+        
+        // 同步销售记录到账单管理
+        await this.initializeSalesSync()
+        console.log('销售记录同步完成')
+      } catch (error) {
+        console.error('初始化数据失败:', error)
+      }
+    },
+    
+    // 强制刷新所有数据
+    async refreshAllData() {
+      try {
+        console.log('强制刷新所有数据...')
+        
+        // 清空现有数据
+        this.agents = {}
+        this.salesRecords = {}
+        
+        // 重新加载所有数据
+        await this.initialize()
+        
+        ElMessage.success('数据刷新成功')
+        return true
+      } catch (error) {
+        console.error('数据刷新失败:', error)
+        ElMessage.error('数据刷新失败')
+        return false
+      }
     },
     
     // 初始化时同步现有销售记录到账单管理
-    initializeSalesSync() {
-      const dataStore = useDataStore()
-      
-      // 检查是否已经同步过
-      const existingSalesTransactions = dataStore.transactions.filter(t => 
-        t.metadata && t.metadata.sourceType === 'sales'
-      )
-      
-      // 如果没有销售相关的交易记录，则同步所有现有销售记录
-      if (existingSalesTransactions.length === 0) {
-        Object.values(this.salesRecords).forEach(sale => {
-          this.syncSaleToTransaction(sale)
-        })
+    async initializeSalesSync() {
+      try {
+        const dataStore = useDataStore()
+        
+        // 检查是否已经同步过
+        const existingSalesTransactions = dataStore.transactions.filter(t => 
+          t.metadata && t.metadata.sourceType === 'sales'
+        )
+        
+        // 如果没有销售相关的交易记录，则同步所有现有销售记录
+        if (existingSalesTransactions.length === 0) {
+          const promises = Object.values(this.salesRecords).map(sale => 
+            this.syncSaleToTransaction(sale)
+          )
+          
+          await Promise.all(promises)
+        }
+        
+        return true
+      } catch (error) {
+        console.error('初始化销售记录同步失败:', error)
+        return false
       }
     }
   }

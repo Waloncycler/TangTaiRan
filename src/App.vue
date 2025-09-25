@@ -1,19 +1,42 @@
 <template>
   <div id="app">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" :key="$route?.path" />
+      </keep-alive>
+    </router-view>
   </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useSalesStore } from '@/stores/sales'
+import { useDataStore } from '@/stores/data'
 
 const authStore = useAuthStore()
+const salesStore = useSalesStore()
+const dataStore = useDataStore()
 
-onMounted(() => {
+onMounted(async () => {
   // 检查本地存储的登录状态
-  authStore.checkLoginStatus()
+  await authStore.checkLoginStatus()
   console.log('应用启动，登录状态:', authStore.isLoggedIn, '用户信息:', authStore.userInfo)
+  
+  // 如果用户已登录，初始化数据
+  if (authStore.isLoggedIn) {
+    try {
+      // 初始化销售数据
+      await salesStore.initialize()
+      
+      // 初始化其他数据（交易、物流、库存等）
+      await dataStore.initialize()
+      
+      console.log('数据初始化完成')
+    } catch (error) {
+      console.error('数据初始化失败:', error)
+    }
+  }
 })
 </script>
 

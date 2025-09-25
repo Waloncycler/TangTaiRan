@@ -2,6 +2,25 @@ const Sale = require('../models/sale.model');
 const Agent = require('../models/agent.model');
 const { errorHandler } = require('../middleware/error.middleware');
 
+// 递归获取所有下级代理ID（包括自己）
+const getAllSubordinateAgentIds = async (agentId) => {
+  // 首先获取当前代理的ObjectId
+  const currentAgent = await Agent.findOne({ id: agentId });
+  if (!currentAgent) {
+    return [];
+  }
+  
+  const subordinates = await Agent.find({ parentId: agentId });
+  let allIds = [currentAgent._id]; // 使用ObjectId
+  
+  for (const subordinate of subordinates) {
+    const subIds = await getAllSubordinateAgentIds(subordinate.id);
+    allIds = allIds.concat(subIds);
+  }
+  
+  return allIds;
+};
+
 /**
  * @desc    创建销售记录
  * @route   POST /api/sales
@@ -9,10 +28,14 @@ const { errorHandler } = require('../middleware/error.middleware');
  */
 exports.createSale = async (req, res, next) => {
   try {
-    const { agentId, customerName, products, totalAmount, saleDate, paymentMethod, notes } = req.body;
+    const { agent: agentId, customer, products, totalAmount, saleDate, paymentMethod, paymentStatus, notes } = req.body;
 
-    // 验证代理是否存在
-    const agent = await Agent.findById(agentId);
+    // 验证代理是否存在（支持字符串ID和ObjectId）
+    let agent = await Agent.findById(agentId);
+    if (!agent) {
+      // 如果通过ObjectId没找到，尝试通过字符串ID查找
+      agent = await Agent.findOne({ id: agentId });
+    }
     if (!agent) {
       return res.status(404).json({
         success: false,
@@ -20,22 +43,55 @@ exports.createSale = async (req, res, next) => {
       });
     }
 
-    // 验证权限：只有管理员或代理本人可以创建销售记录
-    if (req.user.role !== 'admin' && req.user.agentId.toString() !== agentId) {
-      return res.status(403).json({
-        success: false,
-        message: '没有权限为此代理创建销售记录'
-      });
+    // 验证权限：管理员、代理本人或上级代理可以创建销售记录
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 检查是否为代理本人或下级代理
+       const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent.id);
+      
+      // 使用代理的字符串ID进行比较
+      if (!accessibleAgentIds.includes(agent.id)) {
+        return res.status(403).json({
+          success: false,
+          message: '没有权限为此代理创建销售记录'
+        });
+      }
     }
 
     // 创建销售记录
     const sale = await Sale.create({
-      agentId,
-      customerName,
-      products,
+      agentId: agent._id.toString(),
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerAddress: customer.address,
+      products: products.map(p => ({
+        productId: p.product,
+        name: p.product,
+        quantity: p.quantity,
+        unitPrice: p.price,
+        subtotal: p.subtotal
+      })),
       totalAmount,
       saleDate,
       paymentMethod,
+      paymentStatus,
       notes
     });
 
@@ -51,7 +107,7 @@ exports.createSale = async (req, res, next) => {
 /**
  * @desc    获取所有销售记录
  * @route   GET /api/sales
- * @access  Private/Admin
+ * @access  Private/Admin or Agent with hierarchy
  */
 exports.getAllSales = async (req, res, next) => {
   try {
@@ -62,6 +118,31 @@ exports.getAllSales = async (req, res, next) => {
 
     // 过滤参数
     const filter = {};
+    
+    // 权限控制：根据用户角色和代理层级限制数据访问
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 获取所有下级代理ID（包括自己）
+      const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent.id);
+      filter.agentId = { $in: accessibleAgentIds };
+    }
     
     // 日期范围过滤
     if (req.query.startDate && req.query.endDate) {
@@ -75,9 +156,22 @@ exports.getAllSales = async (req, res, next) => {
       filter.saleDate = { $lte: new Date(req.query.endDate) };
     }
 
-    // 代理过滤
+    // 代理过滤（需要检查权限）
     if (req.query.agentId) {
-      filter.agentId = req.query.agentId;
+      if (req.user.role === 'admin') {
+        filter.agentId = req.query.agentId;
+      } else {
+        // 检查请求的代理ID是否在用户可访问的范围内
+        const accessibleAgentIds = filter.agentId.$in || [];
+        if (accessibleAgentIds.includes(req.query.agentId)) {
+          filter.agentId = req.query.agentId;
+        } else {
+          return res.status(403).json({
+            success: false,
+            message: '没有权限查看该代理的销售记录'
+          });
+        }
+      }
     }
 
     // 支付方式过滤
@@ -138,12 +232,35 @@ exports.getSaleById = async (req, res, next) => {
       });
     }
 
-    // 检查权限：只有管理员或代理本人可以查看
-    if (req.user.role !== 'admin' && req.user.agentId.toString() !== sale.agentId._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: '没有权限查看此销售记录'
-      });
+    // 权限验证：管理员、代理本人或上级代理可以创建销售记录
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 获取所有下级代理ID（包括自己）
+      const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent._id.toString());
+      
+      if (!accessibleAgentIds.includes(sale.agentId._id.toString())) {
+        return res.status(403).json({
+          success: false,
+          message: '没有权限查看此销售记录'
+        });
+      }
     }
 
     res.status(200).json({
@@ -234,12 +351,35 @@ exports.getAgentSales = async (req, res, next) => {
       });
     }
     
-    // 检查权限：只有管理员或代理本人可以查看
-    if (req.user.role !== 'admin' && req.user.agentId.toString() !== agentId) {
-      return res.status(403).json({
-        success: false,
-        message: '没有权限查看此代理的销售记录'
-      });
+    // 检查权限：管理员、代理本人或上级代理可以查看
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 获取所有下级代理ID（包括自己）
+       const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent._id.toString());
+      
+      if (!accessibleAgentIds.includes(agentId)) {
+        return res.status(403).json({
+          success: false,
+          message: '没有权限查看此代理的销售记录'
+        });
+      }
     }
     
     // 分页参数
@@ -302,6 +442,32 @@ exports.getSalesStats = async (req, res, next) => {
       filter.saleDate = { $gte: new Date(req.query.startDate) };
     } else if (req.query.endDate) {
       filter.saleDate = { $lte: new Date(req.query.endDate) };
+    }
+
+    // 权限控制：根据用户角色和代理层级限制数据访问
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 获取所有下级代理ID（包括自己）
+      const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent.id);
+      filter.agentId = { $in: accessibleAgentIds };
+      console.log('Stats filter for agent:', currentAgent.id, 'accessibleAgentIds:', accessibleAgentIds);
     }
     
     // 总销售额
@@ -376,12 +542,35 @@ exports.getAgentSalesStats = async (req, res, next) => {
       });
     }
     
-    // 检查权限：只有管理员或代理本人可以查看
-    if (req.user.role !== 'admin' && req.user.agentId.toString() !== agentId) {
-      return res.status(403).json({
-        success: false,
-        message: '没有权限查看此代理的销售统计'
-      });
+    // 检查权限：管理员、代理本人或上级代理可以查看
+    if (req.user.role !== 'admin') {
+      // 获取当前用户的代理信息（支持字符串ID和ObjectId）
+      let currentAgent;
+      if (req.user.agentId) {
+        // 先尝试通过字符串ID查找
+        currentAgent = await Agent.findOne({ id: req.user.agentId });
+        // 如果没找到，再尝试通过ObjectId查找
+        if (!currentAgent) {
+          currentAgent = await Agent.findById(req.user.agentId);
+        }
+      }
+      
+      if (!currentAgent) {
+        return res.status(404).json({
+          success: false,
+          message: '找不到当前用户的代理信息'
+        });
+      }
+
+      // 获取所有下级代理ID（包括自己）
+       const accessibleAgentIds = await getAllSubordinateAgentIds(currentAgent._id.toString());
+      
+      if (!accessibleAgentIds.includes(agentId)) {
+        return res.status(403).json({
+          success: false,
+          message: '没有权限查看此代理的销售统计'
+        });
+      }
     }
     
     // 日期范围过滤

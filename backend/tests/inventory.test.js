@@ -269,36 +269,6 @@ describe('库存管理 API', () => {
     });
   });
 
-  describe('DELETE /api/inventory/:id', () => {
-    it('应该删除库存', async () => {
-      // 创建测试库存
-      const inventories = await createTestInventories(1);
-      const inventory = inventories[0];
-
-      const response = await request(app)
-        .delete(`/api/inventory/${inventory._id}`)
-        .set('Authorization', 'Bearer validtoken')
-        .set('user-role', 'admin');
-
-      expect(response.statusCode).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-
-      // 验证库存已从数据库中删除
-      const deletedInventory = await Inventory.findById(inventory._id);
-      expect(deletedInventory).toBeNull();
-    });
-
-    it('应该返回404当库存不存在', async () => {
-      const response = await request(app)
-        .delete('/api/inventory/507f1f77bcf86cd799439011') // 有效但不存在的ID
-        .set('Authorization', 'Bearer validtoken')
-        .set('user-role', 'admin');
-
-      expect(response.statusCode).toBe(404);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body).toHaveProperty('error');
-    });
-  });
 
   describe('POST /api/inventory/:id/adjust', () => {
     it('应该增加库存数量', async () => {

@@ -91,7 +91,7 @@
               <div class="user-info">
                 <el-avatar :size="32" :icon="UserFilled" />
                 <span class="username">{{ authStore.userInfo.username }}</span>
-                <span class="user-role">{{ authStore.getRoleName(authStore.userInfo.role) }}</span>
+                <span class="user-role">{{ authStore.getRoleName() }}</span>
                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
               </div>
               <template #dropdown>
@@ -111,7 +111,7 @@
       <el-main class="main-content">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="$route?.path" v-if="Component" />
           </transition>
         </router-view>
       </el-main>

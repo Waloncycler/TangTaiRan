@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useDataStore } from '@/stores/data'
 import { 
   Plus, 
@@ -355,6 +355,11 @@ const handleTransactionSaved = () => {
 const exportData = () => {
   ElMessage.info('导出功能开发中...')
 }
+
+// 初始化数据
+onMounted(async () => {
+  await dataStore.fetchTransactions()
+})
 </script>
 
 <style lang="scss" scoped>

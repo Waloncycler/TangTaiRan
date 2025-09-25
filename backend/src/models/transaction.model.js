@@ -29,6 +29,11 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  paymentMethod: {
+    type: String,
+    enum: ['cash', 'card', 'transfer', 'other'],
+    required: true
+  },
   createdBy: {
     type: String,
     required: true,

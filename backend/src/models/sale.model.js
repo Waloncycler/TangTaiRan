@@ -1,11 +1,32 @@
 const mongoose = require('mongoose');
 
-const saleSchema = new mongoose.Schema({
-  id: { 
-    type: String, 
-    required: true, 
-    unique: true 
+const productSchema = new mongoose.Schema({
+  productId: {
+    type: String,
+    required: true
   },
+  name: {
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  unitPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  subtotal: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+}, { _id: false });
+
+const saleSchema = new mongoose.Schema({
   agentId: { 
     type: String, 
     required: true,
@@ -15,20 +36,17 @@ const saleSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  productName: { 
-    type: String, 
-    required: true 
+  customerPhone: {
+    type: String,
+    default: ''
   },
-  quantity: { 
-    type: Number, 
-    required: true,
-    min: 1
+  customerAddress: {
+    type: String,
+    default: ''
   },
-  unitPrice: { 
-    type: Number, 
-    required: true,
-    min: 0
-  },
+  products: [
+    productSchema
+  ],
   totalAmount: { 
     type: Number, 
     required: true,
@@ -41,13 +59,13 @@ const saleSchema = new mongoose.Schema({
   },
   paymentMethod: { 
     type: String,
-    enum: ['cash', 'transfer', 'card', 'other'],
+    enum: ['cash', 'wechat', 'alipay', 'bank_transfer', 'other'],
     default: 'cash'
   },
-  status: { 
+  paymentStatus: { 
     type: String, 
-    enum: ['pending', 'completed', 'cancelled'], 
-    default: 'completed' 
+    enum: ['paid', 'pending', 'partial', 'cancelled'], 
+    default: 'paid' 
   },
   notes: {
     type: String,

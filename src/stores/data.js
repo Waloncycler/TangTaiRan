@@ -2,49 +2,132 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import { useSalesStore } from './sales'
+import api from '@/api'
+import { ElMessage } from 'element-plus'
 
 export const useDataStore = defineStore('data', () => {
   // 交易数据
-  const transactions = ref([
-    { id: 1, type: 'income', amount: 5000, category: 'salary', date: '2025-01-15', note: '工资收入' },
-    { id: 2, type: 'expense', amount: 1200, category: 'food', date: '2025-01-16', note: '餐饮支出' },
-    { id: 3, type: 'expense', amount: 800, category: 'transport', date: '2025-01-17', note: '交通费用' }
-  ])
-
-
-
+  const transactions = ref([])
+  
   // 物流数据
-  const logistics = ref([
-    { id: 1, company: 'sf', orderNumber: 'SF123456789', product: '唐肽燃胶囊', quantity: 100, recipient: '张三', contact: '13800138000', status: 'pending' },
-    { id: 2, company: 'ems', orderNumber: 'EMS987654321', product: '唐肽燃口服液', quantity: 50, recipient: '李四', contact: '13900139000', status: 'transit' }
-  ])
-
+  const logistics = ref([])
+  
   // 库存数据
-  const inventory = ref([
-    { id: 1, name: '勺子', quantity: 150, unit: '个', location: 'Bintulu', status: 'normal', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-15T10:30:00.000Z' },
-    { id: 2, name: '贴纸', quantity: 8, unit: '包', location: 'KL', status: 'low', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-16T14:20:00.000Z' },
-    { id: 3, name: '瓶子', quantity: 0, unit: '个', location: 'Bintulu', status: 'out', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-17T09:15:00.000Z' },
-    { id: 4, name: '唐肽燃', quantity: 200, unit: '盒', location: 'KL', status: 'normal', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-18T15:45:00.000Z' }
-  ])
+  const inventory = ref([])
+  
+  // 加载状态
+  const loading = ref({
+    transactions: false,
+    logistics: false,
+    inventory: false
+  })
+  
+  // 错误信息
+  const error = ref({
+    transactions: null,
+    logistics: null,
+    inventory: null
+  })
 
-  // 库存变动日志
-  const inventoryLogs = ref([
-    { id: 1, timestamp: '2025-01-15T10:30:00.000Z', productName: '勺子', changeType: 'edit', oldQuantity: 170, newQuantity: 150, quantityChange: -20, operator: '系统管理员' },
-    { id: 2, timestamp: '2025-01-16T14:20:00.000Z', productName: '贴纸', changeType: 'edit', oldQuantity: 15, newQuantity: 8, quantityChange: -7, operator: '系统管理员' },
-    { id: 3, timestamp: '2025-01-17T09:15:00.000Z', productName: '瓶子', changeType: 'edit', oldQuantity: 5, newQuantity: 0, quantityChange: -5, operator: '系统管理员' },
-    { id: 4, timestamp: '2025-01-18T15:45:00.000Z', productName: '唐肽燃', changeType: 'add', oldQuantity: 0, newQuantity: 200, quantityChange: 200, operator: '系统管理员' }
-  ])
+  // 初始化方法 - 加载所有数据
+  async function initialize() {
+    await fetchTransactions()
+    await fetchLogistics()
+    await fetchInventory()
+  }
+  
+  // 获取交易数据
+  async function fetchTransactions(params = {}) {
+    loading.value.transactions = true
+    error.value.transactions = null
+    
+    try {
+      const response = await api.transactions.getAll(params)
+      
+      // 交易API需要认证，返回格式为 {success: true, data: [...]}
+      if (response && response.success && Array.isArray(response.data)) {
+        transactions.value = response.data
+      } else if (Array.isArray(response)) {
+        // 兼容直接返回数组的情况
+        transactions.value = response
+      } else {
+        console.warn('获取交易数据格式不正确，使用空数组')
+        transactions.value = []
+      }
+    } catch (err) {
+      console.error('获取交易数据失败:', err)
+      error.value.transactions = '获取交易数据失败'
+      transactions.value = []
+    } finally {
+      loading.value.transactions = false
+    }
+  }
+  
+  // 获取物流数据
+  async function fetchLogistics(params = {}) {
+    loading.value.logistics = true
+    error.value.logistics = null
+    
+    try {
+      const response = await api.logistics.getAll(params)
+      
+      // 物流API需要认证，返回格式为 {success: true, data: [...]}
+      if (response && response.success && Array.isArray(response.data)) {
+        logistics.value = response.data
+      } else if (Array.isArray(response)) {
+        // 兼容直接返回数组的情况
+        logistics.value = response
+      } else {
+        console.warn('获取物流数据格式不正确，使用空数组')
+        logistics.value = []
+      }
+    } catch (err) {
+      console.error('获取物流数据失败:', err)
+      error.value.logistics = '获取物流数据失败'
+      logistics.value = []
+    } finally {
+      loading.value.logistics = false
+    }
+  }
+  
+  // 获取库存数据
+  async function fetchInventory(params = {}) {
+    loading.value.inventory = true
+    error.value.inventory = null
+    
+    try {
+      const response = await api.inventory.getAll(params)
+      
+      // 库存API不需要认证，直接返回数组
+      if (Array.isArray(response)) {
+        inventory.value = response
+      } else if (response && response.success && Array.isArray(response.data)) {
+        // 兼容认证API的响应格式
+        inventory.value = response.data
+      } else {
+        console.warn('获取库存数据格式不正确，使用空数组')
+        inventory.value = []
+      }
+    } catch (err) {
+      console.error('获取库存数据失败:', err)
+      error.value.inventory = '获取库存数据失败'
+      inventory.value = []
+    } finally {
+      loading.value.inventory = false
+    }
+  }
+  
 
+  
   // 计算属性 - 财务概览
   const financialOverview = computed(() => {
     // 获取销售数据
     const salesStore = useSalesStore()
     
-    // 使用示例数据的年月，而不是当前年月
-    // 从第一条交易记录中获取年月
-    const sampleDate = transactions.value.length > 0 ? dayjs(transactions.value[0].date) : dayjs()
-    const currentMonth = sampleDate.month()
-    const currentYear = sampleDate.year()
+    // 使用当前年月
+    const currentDate = dayjs()
+    const currentMonth = currentDate.month()
+    const currentYear = currentDate.year()
     
     const currentMonthTransactions = transactions.value.filter(t => {
       const date = dayjs(t.date)
@@ -57,21 +140,28 @@ export const useDataStore = defineStore('data', () => {
     })
     
     // 计算销售数据
-    const currentMonthSales = Object.values(salesStore.salesRecords || {}).filter(sale => {
+    const allSalesRecords = Object.values(salesStore.salesRecords || {}) || []
+    const currentMonthSales = allSalesRecords.filter(sale => {
+      if (!sale || !sale.saleDate) return false
       const date = dayjs(sale.saleDate)
       return date.month() === currentMonth && date.year() === currentYear
     })
     
-    const previousMonthSales = Object.values(salesStore.salesRecords || {}).filter(sale => {
+    const previousMonthSales = allSalesRecords.filter(sale => {
+      if (!sale || !sale.saleDate) return false
       const date = dayjs(sale.saleDate)
       return date.month() === currentMonth - 1 && date.year() === currentYear
     })
     
-    const calculateTotals = (transactions, sales = []) => {
+    const calculateTotals = (transactions = [], sales = []) => {
+      // 确保参数是数组
+      const safeTransactions = Array.isArray(transactions) ? transactions : []
+      const safeSales = Array.isArray(sales) ? sales : []
+      
       // 只计算交易中的收入，不再加上销售收入，避免重复计算
-      const transactionIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-      const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0)
-      const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      const transactionIncome = safeTransactions.filter(t => t && t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0)
+      const salesRevenue = safeSales.reduce((sum, sale) => sum + (sale && sale.totalAmount || 0), 0)
+      const expense = safeTransactions.filter(t => t && t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0)
       // 总收入只使用交易收入，不再加上销售收入
       const totalIncome = transactionIncome
       const net = totalIncome - expense
@@ -82,8 +172,8 @@ export const useDataStore = defineStore('data', () => {
     const previous = calculateTotals(previousMonthTransactions, previousMonthSales)
     
     // 计算总资产（历史累积净收入）
-    const allTransactions = transactions.value
-    const allSales = Object.values(salesStore.salesRecords || {})
+    const allTransactions = transactions.value || []
+    const allSales = Object.values(salesStore.salesRecords || {}) || []
     const allTotals = calculateTotals(allTransactions, allSales)
     
     return {
@@ -105,9 +195,10 @@ export const useDataStore = defineStore('data', () => {
 
   // 计算属性 - 库存统计
   const inventoryStats = computed(() => {
-    const total = inventory.value.length
-    const lowStock = inventory.value.filter(item => item.status === 'low').length
-    const outOfStock = inventory.value.filter(item => item.status === 'out').length
+    const inventoryArray = inventory.value || []
+    const total = inventoryArray.length
+    const lowStock = inventoryArray.filter(item => item && item.status === 'low').length
+    const outOfStock = inventoryArray.filter(item => item && item.status === 'out').length
     
     return {
       total,
@@ -118,158 +209,296 @@ export const useDataStore = defineStore('data', () => {
   })
 
   // 交易相关方法
-  const addTransaction = (transaction) => {
-    const newTransaction = {
-      id: Date.now(),
-      ...transaction,
-      date: transaction.date || dayjs().format('YYYY-MM-DD')
+  const addTransaction = async (transaction) => {
+    try {
+      const newTransaction = {
+        ...transaction,
+        date: transaction.date || dayjs().format('YYYY-MM-DD')
+      }
+      
+      const response = await api.transactions.create(newTransaction)
+      
+      // 检查API响应格式
+      if (!response || !response.success || !response.data) {
+        console.error('API响应格式错误:', response)
+        return null
+      }
+      
+      const createdTransaction = response.data
+      
+      // 更新本地数据
+      transactions.value.push(createdTransaction)
+      return createdTransaction
+    } catch (error) {
+      console.error('添加交易记录失败:', error)
+      return null
     }
-    transactions.value.push(newTransaction)
-    return newTransaction
   }
 
-  const updateTransaction = (id, updates) => {
-    const index = transactions.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      transactions.value[index] = { ...transactions.value[index], ...updates }
-      return transactions.value[index]
+  const updateTransaction = async (id, updates) => {
+    try {
+      const response = await api.transactions.update(id, updates)
+      
+      // 检查API响应格式
+      if (!response || !response.success || !response.data) {
+        console.error('API响应格式错误:', response)
+        return null
+      }
+      
+      const updatedTransaction = response.data
+      
+      // 更新本地数据 - 支持id和_id两种字段
+      const index = transactions.value.findIndex(t => 
+        t.id === id || t._id === id || 
+        t.id === updatedTransaction.id || t._id === updatedTransaction._id
+      )
+      
+      if (index !== -1) {
+        // 更新现有记录，保持原有的id字段
+        transactions.value[index] = { 
+          ...transactions.value[index], 
+          ...updatedTransaction,
+          id: transactions.value[index].id || updatedTransaction.id,
+          _id: transactions.value[index]._id || updatedTransaction._id
+        }
+        return transactions.value[index]
+      } else {
+        // 如果本地没有这条记录，添加到本地
+        transactions.value.push(updatedTransaction)
+        return updatedTransaction
+      }
+    } catch (error) {
+      console.error('更新交易记录失败:', error)
+      return null
     }
-    return null
   }
 
-  const deleteTransaction = (id) => {
-    const index = transactions.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      transactions.value.splice(index, 1)
-      return true
+  const deleteTransaction = async (id) => {
+    try {
+      await api.transactions.delete(id)
+      
+      // 更新本地数据
+      const index = transactions.value.findIndex(t => t.id === id)
+      if (index !== -1) {
+        transactions.value.splice(index, 1)
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('删除交易记录失败:', error)
+      return false
     }
-    return false
   }
 
 
 
   // 库存相关方法
-  const checkInventoryStatus = (quantity) => {
-    if (quantity <= 0) return 'out'
-    if (quantity <= 10) return 'low'
+  const checkInventoryStatus = (item) => {
+    if (!item) return 'unknown'
+    
+    if (item.quantity <= 0) return 'out'
+    if (item.quantity <= item.reorderPoint) return 'low'
     return 'normal'
   }
-
-  const addInventory = (item) => {
-    const newItem = {
-      id: Date.now(),
-      ...item,
-      status: checkInventoryStatus(item.quantity),
-      createdAt: dayjs().toISOString(),
-      updatedAt: dayjs().toISOString()
-    }
-    inventory.value.push(newItem)
-    
-    // 记录变动日志
-    logInventoryChange({
-      productName: newItem.name,
-      changeType: 'add',
-      oldQuantity: 0,
-      newQuantity: newItem.quantity,
-      quantityChange: newItem.quantity,
-      operator: '系统管理员'
-    })
-    
-    return newItem
-  }
-
-  const updateInventory = (id, updates) => {
-    const index = inventory.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      const oldItem = inventory.value[index]
-      const oldQuantity = oldItem.quantity
-      
-      inventory.value[index] = {
-        ...oldItem,
-        ...updates,
-        status: checkInventoryStatus(updates.quantity || oldItem.quantity),
-        updatedAt: dayjs().toISOString()
+  
+  const addInventory = async (inventoryData) => {
+    try {
+      // 准备数据
+      const newInventory = {
+        ...inventoryData,
+        status: 'normal'
       }
       
-      // 记录变动日志
-      if (updates.quantity !== undefined && updates.quantity !== oldQuantity) {
-        logInventoryChange({
-          productName: inventory.value[index].name,
-          changeType: 'edit',
-          oldQuantity,
-          newQuantity: updates.quantity,
-          quantityChange: updates.quantity - oldQuantity,
-          operator: '系统管理员'
-        })
+      // 调用API创建库存
+      const response = await api.inventory.create(newInventory)
+      
+      // 更新本地数据
+      inventory.value.push(response)
+      
+      ElMessage.success('库存添加成功')
+      return response.id
+    } catch (error) {
+      console.error('添加库存失败:', error)
+      ElMessage.error('添加库存失败')
+      return null
+    }
+  }
+  
+  const updateInventory = async (id, data) => {
+    try {
+      console.log('更新库存，ID:', id)
+      console.log('更新数据:', data)
+      
+      // 查找当前库存 (支持id或_id)
+      const currentItem = inventory.value.find(i => 
+        (i.id && i.id === id) || (i._id && i._id === id)
+      )
+      
+      if (!currentItem) {
+        console.error('找不到库存项，ID:', id)
+        console.log('当前库存列表:', inventory.value)
+        ElMessage.error('库存不存在')
+        return false
       }
       
-      return inventory.value[index]
-    }
-    return null
-  }
+      console.log('找到库存项:', currentItem)
+      const oldQuantity = currentItem.quantity
+      
+      // 调用API更新库存
+      const response = await api.inventory.update(id, data)
+      console.log('API响应:', response)
+      
+      // 更新本地数据
+      // 根据响应中的_id或id查找索引
+      const responseId = response._id || response.id;
+      console.log('API响应中的ID:', responseId);
+      
+      const index = inventory.value.findIndex(i => 
+        (i._id && i._id === responseId) || (i.id && i.id === responseId)
+      );
+      
+      console.log('找到的索引:', index);
+      
+      if (index !== -1) {
+        // 保留原有的id和_id字段，以防API响应中缺少这些字段
+        const originalId = inventory.value[index].id;
+        const original_id = inventory.value[index]._id;
+        
+        // 更新项目，但保留原有的ID字段
+        inventory.value[index] = {
+          ...response,
+          id: response.id || originalId,
+          _id: response._id || original_id
+        };
+        
+        console.log('更新后的项目:', inventory.value[index]);
+      } else {
+        console.log('未找到匹配项，添加新项目');
+        inventory.value.push(response);
+      }
+      
 
-  const deleteInventory = (id) => {
-    const index = inventory.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      const deletedItem = inventory.value[index]
-      inventory.value.splice(index, 1)
       
-      // 记录变动日志
-      logInventoryChange({
-        productName: deletedItem.name,
-        changeType: 'delete',
-        oldQuantity: deletedItem.quantity,
-        newQuantity: 0,
-        quantityChange: -deletedItem.quantity,
-        operator: '系统管理员'
-      })
-      
+      ElMessage.success('库存更新成功')
       return true
+    } catch (error) {
+      console.error('更新库存失败:', error)
+      ElMessage.error('更新库存失败')
+      return false
     }
-    return false
   }
 
-  const logInventoryChange = (changeData) => {
-    const logEntry = {
-      id: Date.now(),
-      timestamp: dayjs().toISOString(),
-      ...changeData
+  const deleteInventory = async (id) => {
+    try {
+      // 查找当前库存
+      const item = inventory.value.find(item => item.id === id)
+      if (!item) {
+        ElMessage.error('库存不存在')
+        return false
+      }
+      
+
+      
+      // 调用API删除库存
+      await api.inventory.delete(id)
+      
+      // 更新本地数据
+      const index = inventory.value.findIndex(i => i.id === id)
+      if (index !== -1) {
+        inventory.value.splice(index, 1)
+      }
+      
+      ElMessage.success('库存删除成功')
+      return true
+    } catch (error) {
+      console.error('删除库存失败:', error)
+      ElMessage.error('删除库存失败')
+      return false
     }
-    inventoryLogs.value.push(logEntry)
-    return logEntry
   }
+
+
 
   // 物流相关方法
-  const addLogistics = (item) => {
-    const newItem = {
-      id: Date.now(),
-      ...item,
-      status: 'pending'
-    }
-    logistics.value.push(newItem)
-    return newItem
-  }
-
-  const updateLogisticsStatus = (id) => {
-    const item = logistics.value.find(l => l.id === id)
-    if (item) {
-      const statusOrder = ['pending', 'transit', 'delivered']
-      const currentIndex = statusOrder.indexOf(item.status)
-      if (currentIndex < statusOrder.length - 1) {
-        item.status = statusOrder[currentIndex + 1]
+  const addLogistics = async (item) => {
+    try {
+      // 准备数据
+      const newItem = {
+        ...item,
+        status: 'pending'
       }
-      return item
+      
+      // 调用API创建物流
+      const response = await api.logistics.create(newItem)
+      
+      // 更新本地数据
+      logistics.value.push(response)
+      
+      ElMessage.success('物流信息添加成功')
+      return response
+    } catch (error) {
+      console.error('添加物流信息失败:', error)
+      ElMessage.error('添加物流信息失败')
+      return null
     }
-    return null
   }
 
-  const deleteLogistics = (id) => {
-    const index = logistics.value.findIndex(l => l.id === id)
-    if (index !== -1) {
-      logistics.value.splice(index, 1)
-      return true
+  const updateLogisticsStatus = async (id, newStatus) => {
+    try {
+      // 查找当前物流
+      const item = logistics.value.find(l => l.id === id)
+      if (!item) {
+        ElMessage.error('物流信息不存在')
+        return null
+      }
+      
+      // 如果没有提供新状态，则自动更新到下一个状态
+      if (!newStatus) {
+        const statusOrder = ['pending', 'transit', 'delivered']
+        const currentIndex = statusOrder.indexOf(item.status)
+        if (currentIndex < statusOrder.length - 1) {
+          newStatus = statusOrder[currentIndex + 1]
+        } else {
+          newStatus = item.status
+        }
+      }
+      
+      // 调用API更新物流状态
+      const response = await api.logistics.update(id, { status: newStatus })
+      
+      // 更新本地数据
+      const index = logistics.value.findIndex(l => l.id === id)
+      if (index !== -1) {
+        logistics.value[index] = response
+      }
+      
+      ElMessage.success('物流状态更新成功')
+      return response
+    } catch (error) {
+      console.error('更新物流状态失败:', error)
+      ElMessage.error('更新物流状态失败')
+      return null
     }
-    return false
+  }
+
+  const deleteLogistics = async (id) => {
+    try {
+      // 调用API删除物流
+      await api.logistics.delete(id)
+      
+      // 更新本地数据
+      const index = logistics.value.findIndex(l => l.id === id)
+      if (index !== -1) {
+        logistics.value.splice(index, 1)
+      }
+      
+      ElMessage.success('物流信息删除成功')
+      return true
+    } catch (error) {
+      console.error('删除物流信息失败:', error)
+      ElMessage.error('删除物流信息失败')
+      return false
+    }
   }
 
   return {
@@ -277,20 +506,22 @@ export const useDataStore = defineStore('data', () => {
     transactions,
     logistics,
     inventory,
-    inventoryLogs,
     
     // 计算属性
     financialOverview,
     inventoryStats,
     
     // 方法
+    initialize,
+    fetchTransactions,
+    fetchLogistics,
+    fetchInventory,
     addTransaction,
     updateTransaction,
     deleteTransaction,
     addInventory,
     updateInventory,
     deleteInventory,
-    logInventoryChange,
     addLogistics,
     updateLogisticsStatus,
     deleteLogistics,

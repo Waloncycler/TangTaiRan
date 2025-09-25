@@ -8,8 +8,6 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import App from './App.vue'
 import router from './router'
 import './styles/main.scss'
-import { useSalesStore } from './stores/sales'
-
 const app = createApp(App)
 const pinia = createPinia()
 
@@ -25,7 +23,3 @@ app.use(ElementPlus, {
 })
 
 app.mount('#app')
-
-// 初始化销售数据同步
-const salesStore = useSalesStore()
-salesStore.initializeSalesSync()

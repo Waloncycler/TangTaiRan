@@ -2,6 +2,53 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
 /**
+ * 验证令牌
+ * @route GET /api/auth/verify
+ * @access Public
+ */
+exports.verifyToken = async (req, res) => {
+  try {
+    // 从请求头获取令牌
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: '未提供令牌'
+      });
+    }
+    
+    // 验证令牌
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // 查找用户
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+        agentId: user.agentId
+      }
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: '令牌无效或已过期'
+    });
+  }
+};
+
+/**
  * 用户登录
  * @route POST /api/auth/login
  * @access Public

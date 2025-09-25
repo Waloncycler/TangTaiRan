@@ -112,14 +112,8 @@ exports.getAllLogistics = async (req, res, next) => {
     // 获取总记录数
     const total = await Logistics.countDocuments(filter);
 
-    res.status(200).json({
-      success: true,
-      count: logistics.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      data: logistics
-    });
+    // 直接返回数组格式，与前端期望一致
+    res.status(200).json(logistics);
   } catch (error) {
     next(error);
   }

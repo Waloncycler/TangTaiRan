@@ -14,7 +14,7 @@
             <el-icon size="24"><Box /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ dataStore.inventoryStats.total }}</div>
+            <div class="stat-value">{{ dataStore.inventoryStats?.total || 0 }}</div>
             <div class="stat-label">总商品</div>
           </div>
         </div>
@@ -85,6 +85,11 @@
         v-loading="loading"
       >
         <el-table-column prop="name" label="商品名称" min-width="150" />
+        <el-table-column prop="productCode" label="产品编码" width="120">
+          <template #default="{row}">
+            {{ PRODUCT_CODE_NAMES[row.productCode] || row.productCode }}
+          </template>
+        </el-table-column>
         <el-table-column prop="quantity" label="数量" width="100" sortable />
         <el-table-column prop="unit" label="单位" width="80" />
         <el-table-column prop="location" label="存储位置" width="120" />
@@ -125,66 +130,7 @@
       </div>
     </el-card>
 
-    <!-- 库存变动记录 -->
-    <el-card class="logs-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">库存变动记录</span>
-          <div class="log-filters">
-            <el-select v-model="logTypeFilter" placeholder="操作类型" style="width: 120px" clearable>
-              <el-option label="新增" value="add" />
-              <el-option label="修改" value="edit" />
-              <el-option label="删除" value="delete" />
-            </el-select>
-            <el-date-picker
-              v-model="logDateFilter"
-              type="date"
-              placeholder="选择日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              style="width: 150px"
-              clearable
-            />
-          </div>
-        </div>
-      </template>
-      
-      <el-table
-        :data="filteredLogs.slice(0, 10)"
-        style="width: 100%"
-        size="small"
-      >
-        <el-table-column prop="timestamp" label="时间" width="160">
-          <template #default="{ row }">
-            {{ formatDate(row.timestamp) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="productName" label="商品名称" min-width="120" />
-        <el-table-column prop="changeType" label="操作类型" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getChangeTypeTag(row.changeType)" size="small">
-              {{ getChangeTypeText(row.changeType) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="oldQuantity" label="原数量" width="80" />
-        <el-table-column prop="newQuantity" label="新数量" width="80" />
-        <el-table-column prop="quantityChange" label="变化量" width="80">
-          <template #default="{ row }">
-            <span :class="row.quantityChange > 0 ? 'change-positive' : 'change-negative'">
-              {{ row.quantityChange > 0 ? '+' : '' }}{{ row.quantityChange }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operator" label="操作人" width="100" />
-      </el-table>
-      
-      <div v-if="filteredLogs.length > 10" class="show-more">
-        <el-button type="primary" link @click="showAllLogs = !showAllLogs">
-          {{ showAllLogs ? '收起' : `查看全部 ${filteredLogs.length} 条记录` }}
-        </el-button>
-      </div>
-    </el-card>
+
 
     <!-- 添加/编辑商品对话框 -->
     <el-dialog
@@ -201,6 +147,17 @@
       >
         <el-form-item label="商品名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入商品名称" />
+        </el-form-item>
+        
+        <el-form-item label="产品编码" prop="productCode">
+          <el-select v-model="form.productCode" placeholder="请选择产品编码" style="width: 100%">
+            <el-option 
+              v-for="option in getProductCodeOptions()" 
+              :key="option.value" 
+              :label="option.label" 
+              :value="option.value" 
+            />
+          </el-select>
         </el-form-item>
         
         <el-form-item label="数量" prop="quantity">
@@ -234,7 +191,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useDataStore } from '@/stores/data'
 import { 
   Plus, 
@@ -246,6 +203,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
+import { getProductCodeOptions, PRODUCT_CODE_NAMES } from '../constants/productCodes'
 
 const dataStore = useDataStore()
 const formRef = ref()
@@ -256,13 +214,12 @@ const searchText = ref('')
 const statusFilter = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
-const showAllLogs = ref(false)
-const logTypeFilter = ref('')
-const logDateFilter = ref('')
+
 
 // 表单数据
 const form = reactive({
   name: '',
+  productCode: '',
   quantity: null,
   unit: '',
   location: ''
@@ -272,6 +229,9 @@ const form = reactive({
 const rules = {
   name: [
     { required: true, message: '请输入商品名称', trigger: 'blur' }
+  ],
+  productCode: [
+    { required: true, message: '请输入产品编码', trigger: 'blur' }
   ],
   quantity: [
     { required: true, message: '请输入数量', trigger: 'blur' },
@@ -312,26 +272,7 @@ const paginatedInventory = computed(() => {
   return filteredInventory.value.slice(start, end)
 })
 
-// 过滤后的日志
-const filteredLogs = computed(() => {
-  let result = dataStore.inventoryLogs
-  
-  // 操作类型过滤
-  if (logTypeFilter.value) {
-    result = result.filter(log => log.changeType === logTypeFilter.value)
-  }
-  
-  // 日期过滤
-  if (logDateFilter.value) {
-    result = result.filter(log => {
-      const logDate = dayjs(log.timestamp).format('YYYY-MM-DD')
-      return logDate === logDateFilter.value
-    })
-  }
-  
-  // 按时间倒序排序
-  return result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-})
+
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -358,29 +299,11 @@ const getStatusText = (status) => {
   return textMap[status] || status
 }
 
-// 获取变化类型标签
-const getChangeTypeTag = (type) => {
-  const tagMap = {
-    'add': 'success',
-    'edit': 'warning',
-    'delete': 'danger'
-  }
-  return tagMap[type] || 'info'
-}
-
-// 获取变化类型文本
-const getChangeTypeText = (type) => {
-  const textMap = {
-    'add': '新增',
-    'edit': '修改',
-    'delete': '删除'
-  }
-  return textMap[type] || type
-}
 
 // 重置表单
 const resetForm = () => {
   form.name = ''
+  form.productCode = ''
   form.quantity = null
   form.unit = ''
   form.location = ''
@@ -392,8 +315,12 @@ const resetForm = () => {
 
 // 编辑商品
 const editInventory = (item) => {
+  console.log('编辑的商品项:', item)
+  console.log('商品ID:', item.id)
+  console.log('商品_id:', item._id)
   editingItem.value = item
   form.name = item.name
+  form.productCode = item.productCode || ''
   form.quantity = item.quantity
   form.unit = item.unit
   form.location = item.location
@@ -413,7 +340,9 @@ const deleteInventory = async (item) => {
       }
     )
     
-    dataStore.deleteInventory(item.id)
+    await dataStore.deleteInventory(item.id)
+    // 刷新库存数据以确保实时更新
+    await dataStore.fetchInventory()
     ElMessage.success('删除成功')
   } catch {
     // 用户取消删除
@@ -432,8 +361,17 @@ const handleSubmit = async () => {
     
     if (editingItem.value) {
       // 编辑模式
-      dataStore.updateInventory(editingItem.value.id, {
+      console.log('提交时的编辑项:', editingItem.value)
+      console.log('提交时的ID:', editingItem.value.id)
+      console.log('提交时的_id:', editingItem.value._id)
+      
+      // 使用_id替代id
+      const inventoryId = editingItem.value._id || editingItem.value.id
+      console.log('使用的ID:', inventoryId)
+      
+      await dataStore.updateInventory(inventoryId, {
         name: form.name,
+        productCode: form.productCode,
         quantity: form.quantity,
         unit: form.unit,
         location: form.location
@@ -443,13 +381,17 @@ const handleSubmit = async () => {
       // 添加模式
       const item = {
         name: form.name,
+        productCode: form.productCode,
         quantity: form.quantity,
         unit: form.unit,
         location: form.location
       }
-      dataStore.addInventory(item)
+      await dataStore.addInventory(item)
       ElMessage.success('商品添加成功')
     }
+    
+    // 刷新库存数据以确保实时更新
+    await dataStore.fetchInventory()
     
     handleDialogClose()
   } catch (error) {
@@ -471,6 +413,11 @@ const handleDialogClose = () => {
 const exportData = () => {
   ElMessage.info('导出功能开发中...')
 }
+
+// 组件挂载时获取库存数据
+onMounted(async () => {
+  await dataStore.fetchInventory()
+})
 </script>
 
 <style lang="scss" scoped>

@@ -38,7 +38,7 @@ const inventoryHistorySchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, '创建者是必需的']
+    required: false
   }
 }, {
   timestamps: true

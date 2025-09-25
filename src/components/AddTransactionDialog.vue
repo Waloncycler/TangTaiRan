@@ -60,6 +60,15 @@
         />
       </el-form-item>
       
+      <el-form-item label="支付方式" prop="paymentMethod">
+        <el-select v-model="form.paymentMethod" placeholder="请选择支付方式" style="width: 100%">
+          <el-option label="现金" value="cash" />
+          <el-option label="银行卡" value="card" />
+          <el-option label="转账" value="transfer" />
+          <el-option label="其他" value="other" />
+        </el-select>
+      </el-form-item>
+      
       <el-form-item label="备注" prop="note">
         <el-input
           v-model="form.note"
@@ -93,6 +102,10 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  transaction: {
+    type: Object,
+    default: null
   }
 })
 
@@ -114,8 +127,35 @@ const form = reactive({
   amount: null,
   category: '',
   date: dayjs().format('YYYY-MM-DD'),
+  paymentMethod: 'cash',
   note: ''
 })
+
+// 监听对话框打开，预填充编辑数据
+watch(() => dialogVisible.value, (val) => {
+  if (val && props.transaction) {
+    // 编辑模式，预填充数据
+    form.type = props.transaction.type || 'expense'
+    form.amount = props.transaction.amount || null
+    form.category = props.transaction.category || ''
+    form.date = props.transaction.date || dayjs().format('YYYY-MM-DD')
+    form.paymentMethod = props.transaction.paymentMethod || 'cash'
+    form.note = props.transaction.note || ''
+  }
+})
+
+// 监听transaction变化，预填充编辑数据
+watch(() => props.transaction, (val) => {
+  if (val && dialogVisible.value) {
+    // 编辑模式，预填充数据
+    form.type = val.type || 'expense'
+    form.amount = val.amount || null
+    form.category = val.category || ''
+    form.date = val.date || dayjs().format('YYYY-MM-DD')
+    form.paymentMethod = val.paymentMethod || 'cash'
+    form.note = val.note || ''
+  }
+}, { immediate: true })
 
 // 分类选项
 const categoryOptions = computed(() => {
@@ -158,6 +198,9 @@ const rules = {
   ],
   date: [
     { required: true, message: '请选择日期', trigger: 'change' }
+  ],
+  paymentMethod: [
+    { required: true, message: '请选择支付方式', trigger: 'change' }
   ]
 }
 
@@ -172,6 +215,7 @@ const resetForm = () => {
   form.amount = null
   form.category = ''
   form.date = dayjs().format('YYYY-MM-DD')
+  form.paymentMethod = 'cash'
   form.note = ''
   
   if (formRef.value) {
@@ -189,23 +233,42 @@ const handleSubmit = async () => {
     
     loading.value = true
     
-    // 添加交易记录
+    // 准备交易数据
     const transaction = {
       type: form.type,
       amount: form.amount,
       category: form.category,
       date: form.date,
+      paymentMethod: form.paymentMethod,
       note: form.note || ''
     }
     
-    dataStore.addTransaction(transaction)
+    if (props.transaction) {
+      // 编辑现有交易
+      const transactionId = props.transaction.id || props.transaction._id
+      const result = await dataStore.updateTransaction(transactionId, transaction)
+      if (result) {
+        ElMessage.success('交易记录更新成功')
+      } else {
+        ElMessage.error('交易记录更新失败')
+        return
+      }
+    } else {
+      // 添加新交易
+      const result = await dataStore.addTransaction(transaction)
+      if (result) {
+        ElMessage.success('交易记录添加成功')
+      } else {
+        ElMessage.error('交易记录添加失败')
+        return
+      }
+    }
     
-    ElMessage.success('交易记录添加成功')
     emit('success')
     handleClose()
   } catch (error) {
-    console.error('添加交易记录失败:', error)
-    ElMessage.error('添加失败，请重试')
+    console.error('保存交易记录失败:', error)
+    ElMessage.error('保存失败，请重试')
   } finally {
     loading.value = false
   }
