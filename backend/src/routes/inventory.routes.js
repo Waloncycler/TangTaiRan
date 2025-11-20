@@ -158,7 +158,7 @@ const { validateInventory, validateInventoryUpdate } = require('../middleware/va
  *       500:
  *         description: 服务器错误
  */
-router.get('/stats', inventoryController.getInventoryStats); // 临时移除认证中间件进行测试
+router.get('/stats', authMiddleware, authorizeRoles('admin'), inventoryController.getInventoryStats);
 
 /**
  * @swagger
@@ -258,8 +258,8 @@ router.get('/stats', inventoryController.getInventoryStats); // 临时移除认�
  */
 router
   .route('/')
-  .get(inventoryController.getAllInventory) // 临时移除认证中间件进行测试
-  .post(validateInventory, inventoryController.createInventory); // 临时移除认证中间件进行测试
+  .get(authMiddleware, authorizeRoles('admin'), inventoryController.getAllInventory)
+  .post(authMiddleware, authorizeRoles('admin'), validateInventory, inventoryController.createInventory);
 
 /**
  * @swagger
@@ -378,9 +378,9 @@ router
  */
 router
   .route('/:id')
-  .get(inventoryController.getInventoryById) // 临时移除认证中间件进行测试
-  .put(validateInventoryUpdate, inventoryController.updateInventory) // 临时移除认证中间件进行测试
-  .delete(inventoryController.deleteInventory); // 临时移除认证中间件进行测试
+  .get(authMiddleware, authorizeRoles('admin'), inventoryController.getInventoryById)
+  .put(authMiddleware, authorizeRoles('admin'), validateInventoryUpdate, inventoryController.updateInventory)
+  .delete(authMiddleware, authorizeRoles('admin'), inventoryController.deleteInventory);
 
 
 
@@ -474,6 +474,6 @@ router
  *       500:
  *         description: 服务器错误
  */
-router.get('/:id/history', inventoryController.getInventoryHistory); // 临时移除认证中间件进行测试
+router.get('/:id/history', authMiddleware, authorizeRoles('admin'), inventoryController.getInventoryHistory);
 
 module.exports = router;

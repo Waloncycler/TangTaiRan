@@ -55,8 +55,10 @@ exports.getAllInventory = async (req, res, next) => {
       .skip(startIndex)
       .limit(limit);
 
-    // 返回数组格式，与前端期望一致
-    res.status(200).json(inventory);
+    res.status(200).json({
+      success: true,
+      data: inventory
+    });
   } catch (error) {
     next(error);
   }
@@ -167,7 +169,7 @@ exports.getInventoryById = async (req, res, next) => {
  */
 exports.createInventory = async (req, res, next) => {
   try {
-    const { name, productName, productCode, quantity, unit, location, status, lowThreshold } = req.body;
+    const { name, productName, productCode, quantity, unit, location, status, lowThreshold, costPrice, sellingPrice, description } = req.body;
 
     // 支持两种字段名：name（新）和productName（旧），优先使用name
     const productNameValue = name || productName;
@@ -202,7 +204,10 @@ exports.createInventory = async (req, res, next) => {
       unit,
       location,
       status,
-      lowThreshold
+      lowThreshold,
+      costPrice,
+      sellingPrice,
+      description
     };
     
     const inventory = await Inventory.create(inventoryData);
@@ -498,13 +503,13 @@ exports.getInventoryStats = async (req, res, next) => {
       {
         $group: {
           _id: null,
-          totalCostValue: { $sum: { $multiply: ['$quantity', '$costPrice'] } },
-          totalSellingValue: { $sum: { $multiply: ['$quantity', '$sellingPrice'] } },
+          totalCostValue: { $sum: { $multiply: ['$quantity', { $ifNull: ['$costPrice', 0] }] } },
+          totalSellingValue: { $sum: { $multiply: ['$quantity', { $ifNull: ['$sellingPrice', 0] }] } },
           potentialProfit: { 
             $sum: { 
               $subtract: [
-                { $multiply: ['$quantity', '$sellingPrice'] },
-                { $multiply: ['$quantity', '$costPrice'] }
+                { $multiply: ['$quantity', { $ifNull: ['$sellingPrice', 0] }] },
+                { $multiply: ['$quantity', { $ifNull: ['$costPrice', 0] }] }
               ] 
             } 
           }
@@ -519,12 +524,12 @@ exports.getInventoryStats = async (req, res, next) => {
     ]);
     
     // 低库存产品
-    const lowStockProducts = await Inventory.find({ status: 'low_stock' })
+    const lowStockProducts = await Inventory.find({ status: 'low' })
       .sort({ quantity: 1 })
       .limit(5);
     
     // 缺货产品
-    const outOfStockProducts = await Inventory.find({ status: 'out_of_stock' })
+    const outOfStockProducts = await Inventory.find({ status: 'out' })
       .sort({ updatedAt: -1 })
       .limit(5);
     
@@ -544,9 +549,9 @@ exports.getInventoryStats = async (req, res, next) => {
           return acc;
         }, {}),
         inventoryValue: valueStats.length > 0 ? {
-          totalCostValue: valueStats[0].totalCostValue,
-          totalSellingValue: valueStats[0].totalSellingValue,
-          potentialProfit: valueStats[0].potentialProfit
+          totalCostValue: valueStats[0].totalCostValue || 0,
+          totalSellingValue: valueStats[0].totalSellingValue || 0,
+          potentialProfit: valueStats[0].potentialProfit || 0
         } : {
           totalCostValue: 0,
           totalSellingValue: 0,
@@ -598,7 +603,7 @@ exports.exportInventory = async (req, res, next) => {
     // 格式化数据用于导出
     const formattedInventory = inventory.map(item => ({
       id: item._id,
-      productName: item.productName,
+      name: item.name,
       productCode: item.productCode,
       quantity: item.quantity,
       unit: item.unit,
@@ -606,7 +611,7 @@ exports.exportInventory = async (req, res, next) => {
       sellingPrice: item.sellingPrice,
       location: item.location,
       status: item.status,
-      alertThreshold: item.alertThreshold,
+      lowThreshold: item.lowThreshold,
       description: item.description,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString()

@@ -44,6 +44,38 @@ export const useSalesStore = defineStore('sales', {
   }),
   
   getters: {
+    // 内部方法：获取当前用户可访问的代理ID列表
+    _getAccessibleAgentIds() {
+      const authStore = useAuthStore()
+      
+      // 如果未登录，返回空数组
+      if (!authStore.isLoggedIn) return []
+      
+      // 管理员可以访问所有代理
+      if (authStore.userInfo.role === 'admin') {
+        return []  // 空数组表示无限制
+      }
+      
+      // 其他角色需要根据层级关系计算可访问的代理
+      const userAgentId = authStore.userInfo.agentId
+      if (!userAgentId) return []
+      
+      // 递归获取所有下级代理ID
+      const getSubordinateIds = (parentId) => {
+        const subordinates = Object.values(this.agents).filter(agent => agent.parentId === parentId)
+        let allIds = []
+        subordinates.forEach(agent => {
+          allIds.push(agent.id)
+          allIds = allIds.concat(getSubordinateIds(agent.id))
+        })
+        return allIds
+      }
+      
+      // 包括自己和所有下级
+      const accessibleIds = [userAgentId, ...getSubordinateIds(userAgentId)]
+      return accessibleIds
+    },
+
     // 根据当前用户权限过滤代理列表
     filteredAgents() {
       const authStore = useAuthStore()
@@ -57,7 +89,7 @@ export const useSalesStore = defineStore('sales', {
       }
       
       // 获取当前用户可访问的代理ID列表
-      const accessibleAgentIds = authStore.getAccessibleAgentIds()
+      const accessibleAgentIds = this._getAccessibleAgentIds
       
       // 过滤出可访问的代理
       const result = {}
@@ -83,7 +115,7 @@ export const useSalesStore = defineStore('sales', {
       }
       
       // 获取当前用户可访问的代理ID列表
-      const accessibleAgentIds = authStore.getAccessibleAgentIds()
+      const accessibleAgentIds = this._getAccessibleAgentIds
       
       // 过滤出可访问的销售记录
       return Object.values(this.salesRecords)
@@ -109,18 +141,18 @@ export const useSalesStore = defineStore('sales', {
     },
     
     // 获取代理的团队结构树
-    getTeamTree: (state) => {
+    getTeamTree() {
       const authStore = useAuthStore()
       
       // 获取过滤后的代理
-      let agentsToUse = state.agents
+      let agentsToUse = this.agents
       
       // 如果不是管理员，使用过滤后的数据
       if (authStore.isLoggedIn && authStore.userInfo.role !== 'admin') {
-        const accessibleAgentIds = authStore.getAccessibleAgentIds()
+        const accessibleAgentIds = this._getAccessibleAgentIds
         agentsToUse = accessibleAgentIds.reduce((acc, agentId) => {
-          if (state.agents[agentId]) {
-            acc[agentId] = state.agents[agentId]
+          if (this.agents[agentId]) {
+            acc[agentId] = this.agents[agentId]
           }
           return acc
         }, {})
@@ -175,17 +207,17 @@ export const useSalesStore = defineStore('sales', {
     },
     
     // 获取销售排行榜
-    getSalesRanking: (state) => {
+    getSalesRanking() {
       const authStore = useAuthStore()
       
       // 获取过滤后的销售记录
-      let salesRecordsToUse = state.salesRecords
-      let agentsToUse = state.agents
+      let salesRecordsToUse = this.salesRecords
+      let agentsToUse = this.agents
       
       // 如果不是管理员，使用过滤后的数据
       if (authStore.isLoggedIn && authStore.userInfo.role !== 'admin') {
-        const accessibleAgentIds = authStore.getAccessibleAgentIds()
-        salesRecordsToUse = Object.values(state.salesRecords)
+        const accessibleAgentIds = this._getAccessibleAgentIds
+        salesRecordsToUse = Object.values(this.salesRecords)
           .filter(record => accessibleAgentIds.includes(record.agentId))
           .reduce((acc, record) => {
             acc[record.id] = record
@@ -193,8 +225,8 @@ export const useSalesStore = defineStore('sales', {
           }, {})
           
         agentsToUse = accessibleAgentIds.reduce((acc, agentId) => {
-          if (state.agents[agentId]) {
-            acc[agentId] = state.agents[agentId]
+          if (this.agents[agentId]) {
+            acc[agentId] = this.agents[agentId]
           }
           return acc
         }, {})
@@ -249,6 +281,68 @@ export const useSalesStore = defineStore('sales', {
         monthly: monthlyStats,
         region: regionStats
       }
+    },
+
+    // 获取扁平化的代理列表
+    flatAgentsList() {
+      const authStore = useAuthStore()
+      
+      // 如果未登录，返回空数组
+      if (!authStore.isLoggedIn) return []
+      
+      // 管理员可以看到所有代理
+      if (authStore.userInfo.role === 'admin') {
+        return Object.values(this.agents)
+      }
+      
+      // 获取当前用户可访问的代理ID列表
+      const accessibleAgentIds = this._getAccessibleAgentIds
+      
+      // 过滤出可访问的代理
+      return accessibleAgentIds
+        .map(agentId => this.agents[agentId])
+        .filter(agent => agent) // 过滤掉undefined
+    },
+
+    // 获取代理层级结构
+    agentHierarchy() {
+      const authStore = useAuthStore()
+      
+      // 如果未登录，返回空数组
+      if (!authStore.isLoggedIn) return []
+      
+      // 获取过滤后的代理
+      let agentsToUse = this.agents
+      
+      // 如果不是管理员，使用过滤后的数据
+      if (authStore.userInfo.role !== 'admin') {
+        const accessibleAgentIds = this._getAccessibleAgentIds
+        agentsToUse = accessibleAgentIds.reduce((acc, agentId) => {
+          if (this.agents[agentId]) {
+            acc[agentId] = this.agents[agentId]
+          }
+          return acc
+        }, {})
+      }
+      
+      // 找出所有顶级代理（没有上级的代理）或当前用户的代理（如果是代理登录）
+      let rootId = null
+      
+      if (authStore.userInfo.agentId && authStore.userInfo.role !== 'admin') {
+        // 如果是代理登录，只显示自己为根节点的树
+        rootId = authStore.userInfo.agentId
+      }
+      
+      const buildTree = (parentId = rootId) => {
+        return Object.values(agentsToUse)
+          .filter(agent => agent.parentId === parentId)
+          .map(agent => ({
+            ...agent,
+            children: buildTree(agent.id)
+          }))
+      }
+      
+      return buildTree()
     }
   },
   
@@ -587,7 +681,7 @@ export const useSalesStore = defineStore('sales', {
     },
     
     // 初始化数据（带去重保护）
-    async initialize(force = false) {
+    async initialize(force = true) {
       // 如果已经初始化且不是强制刷新，直接返回
       if (this.initialized && !force) {
         console.log('销售数据已初始化，跳过重复初始化')
@@ -607,12 +701,12 @@ export const useSalesStore = defineStore('sales', {
         this.initializing = true
         console.log('开始初始化销售数据...')
         
-        // 加载代理数据（不强制刷新，除非明确要求）
-        await this.fetchAgents({ forceRefresh: force })
+        // 总是强制刷新代理数据以获取最新信息
+        await this.fetchAgents({ forceRefresh: true })
         console.log('代理数据加载完成:', Object.keys(this.agents).length)
         
-        // 加载销售记录（不强制刷新，除非明确要求）
-        await this.fetchSales({ forceRefresh: force })
+        // 总是强制刷新销售记录以获取最新信息
+        await this.fetchSales({ forceRefresh: true })
         console.log('销售记录加载完成:', Object.keys(this.salesRecords).length)
         
         // 同步销售记录到账单管理

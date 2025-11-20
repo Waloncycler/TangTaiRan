@@ -84,28 +84,28 @@
         style="width: 100%"
         v-loading="loading"
       >
-        <el-table-column prop="name" label="商品名称" min-width="150" />
-        <el-table-column prop="productCode" label="产品编码" width="120">
+        <el-table-column prop="name" label="商品名称" width="200" />
+        <el-table-column prop="productCode" label="产品编码" width="200">
           <template #default="{row}">
             {{ PRODUCT_CODE_NAMES[row.productCode] || row.productCode }}
           </template>
         </el-table-column>
-        <el-table-column prop="quantity" label="数量" width="100" sortable />
-        <el-table-column prop="unit" label="单位" width="80" />
-        <el-table-column prop="location" label="存储位置" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="quantity" label="数量" width="200" sortable />
+        <el-table-column prop="unit" label="单位" width="200" />
+        <el-table-column prop="location" label="存储位置" width="200" />
+        <el-table-column prop="status" label="状态" width="200">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" width="160">
+        <el-table-column prop="updatedAt" label="更新时间" width="250">
           <template #default="{ row }">
             {{ formatDate(row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="editInventory(row)">
               编辑

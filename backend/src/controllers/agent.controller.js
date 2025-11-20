@@ -89,7 +89,7 @@ async function getSubordinateAgentIds(parentId) {
  */
 exports.getAgentById = async (req, res, next) => {
   try {
-    const agent = await Agent.findById(req.params.id);
+    const agent = await Agent.findOne({ id: req.params.id });
     
     if (!agent) {
       return res.status(404).json({
@@ -99,7 +99,7 @@ exports.getAgentById = async (req, res, next) => {
     }
 
     // 检查权限：只有管理员或代理本人可以查看
-    if (req.user.role !== 'admin' && req.user.agentId.toString() !== agent._id.toString()) {
+    if (req.user.role !== 'admin' && req.user.agentId !== agent.id) {
       return res.status(403).json({
         success: false,
         message: '没有权限查看此代理信息'

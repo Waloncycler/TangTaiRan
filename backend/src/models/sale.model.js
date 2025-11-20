@@ -75,6 +75,16 @@ const saleSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// 添加虚拟属性 id，返回 _id 的字符串形式
+saleSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+});
+
+// 确保虚拟字段被序列化
+saleSchema.set('toJSON', {
+  virtuals: true
+});
+
 // 索引优化查询
 saleSchema.index({ agentId: 1 });
 saleSchema.index({ saleDate: -1 });

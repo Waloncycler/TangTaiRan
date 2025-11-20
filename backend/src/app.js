@@ -20,15 +20,20 @@ const exportRoutes = require('./routes/export.routes');
 // 导入中间件
 const { errorHandler } = require('./middleware/error.middleware');
 const { authMiddleware } = require('./middleware/auth.middleware');
+const { disableCacheForDataRoutes } = require('./middleware/cache.middleware');
 
 // 初始化Express应用
 const app = express();
 
 // 基本中间件
 app.use(helmet()); // 安全HTTP头
-app.use(cors()); // 跨域资源共享
-app.use(express.json()); // 解析JSON请求体
-app.use(morgan('dev')); // 请求日志
+const dev = process.env.NODE_ENV !== 'production';
+const corsOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
+app.use(cors({ origin: dev ? true : corsOrigin, credentials: true, optionsSuccessStatus: 204 }));
+app.use(express.json());
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
 
 // 速率限制配置
 const apiLimiter = rateLimit({
@@ -95,12 +100,15 @@ app.use('/api', (req, res, next) => {
   apiLimiter(req, res, next);
 });
 
+// 禁用数据路由的缓存
+app.use('/api', disableCacheForDataRoutes);
+
 // 路由
 app.use('/api/auth', authRoutes);
 app.use('/api/agents', authMiddleware, agentRoutes);
 app.use('/api/sales', authMiddleware, saleRoutes);
 app.use('/api/transactions', authMiddleware, transactionRoutes);
-app.use('/api/inventory', inventoryRoutes); // 临时移除认证中间件进行测试
+app.use('/api/inventory', authMiddleware, inventoryRoutes);
 app.use('/api/logistics', authMiddleware, logisticsRoutes);
 app.use('/api', authMiddleware, exportRoutes);
 
@@ -120,6 +128,11 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 // 连接数据库
+if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
+  console.error('缺少必要环境变量 MONGODB_URI 或 JWT_SECRET');
+  process.exit(1);
+}
+
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('成功连接到MongoDB数据库');

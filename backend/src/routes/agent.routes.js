@@ -407,7 +407,7 @@ router.post('/', authorizeRoles('admin'), createAgent);
  *       500:
  *         description: 服务器错误
  */
-router.get('/:id', agentDataAccess, getAgentById);
+router.get('/:id', agentDataAccess('id'), getAgentById);
 
 /**
  * @swagger

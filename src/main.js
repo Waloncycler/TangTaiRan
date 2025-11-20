@@ -11,12 +11,16 @@ import './styles/main.scss'
 const app = createApp(App)
 const pinia = createPinia()
 
+import { useAuthStore } from '@/stores/auth'
+
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
 app.use(pinia)
+const authStore = useAuthStore()
+await authStore.checkLoginStatus()
 app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,

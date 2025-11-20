@@ -4,20 +4,19 @@ const { errorHandler } = require('../middleware/error.middleware');
 
 // 递归获取所有下级代理ID（包括自己）
 const getAllSubordinateAgentIds = async (agentId) => {
-  // 首先获取当前代理的ObjectId
-  const currentAgent = await Agent.findOne({ id: agentId });
-  if (!currentAgent) {
+  const agent = await Agent.findOne({ id: agentId });
+  if (!agent) {
     return [];
   }
-  
+
   const subordinates = await Agent.find({ parentId: agentId });
-  let allIds = [currentAgent._id]; // 使用ObjectId
-  
+  let allIds = [agent.id];
+
   for (const subordinate of subordinates) {
     const subIds = await getAllSubordinateAgentIds(subordinate.id);
     allIds = allIds.concat(subIds);
   }
-  
+
   return allIds;
 };
 
@@ -77,7 +76,7 @@ exports.createSale = async (req, res, next) => {
 
     // 创建销售记录
     const sale = await Sale.create({
-      agentId: agent._id.toString(),
+      agentId: agent.id,
       customerName: customer.name,
       customerPhone: customer.phone,
       customerAddress: customer.address,

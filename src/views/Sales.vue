@@ -18,7 +18,6 @@
         </el-button>
       </div>
     </div>
-
     <!-- 筛选条件 -->
     <el-card class="filter-card" shadow="never">
       <div class="filter-row">
@@ -152,7 +151,7 @@
               :default-expand-all="true"
               @node-click="handleAgentClick"
             >
-              <template #default="{ node, data }">
+              <template #default="{ data }">
                 <div class="tree-node">
                   <div class="node-info">
                     <el-avatar :size="28" class="node-avatar">
@@ -372,70 +371,106 @@
     <!-- 添加销售记录对话框 -->
     <el-dialog
       v-model="showAddSaleDialog"
-      title="添加销售记录"
-      width="600px"
+      :title="isEditMode ? '编辑销售记录' : '添加销售记录'"
+      width="800px"
       :before-close="handleCloseAddSaleDialog"
     >
-      <el-form
-        ref="saleFormRef"
-        :model="saleForm"
-        :rules="saleFormRules"
-        label-width="100px"
-      >
-        <el-form-item label="代理" prop="agentId">
-          <el-select v-model="saleForm.agentId" placeholder="选择代理" filterable>
-            <el-option
-              v-for="agent in salesStore.flatAgentsList"
-              :key="agent._id"
-              :label="`${agent.name} (${getAgentLevelName(agent.level)})`"
-              :value="agent._id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="客户姓名" prop="customerName">
-          <el-input v-model="saleForm.customerName" placeholder="请输入客户姓名" />
-        </el-form-item>
-        <el-form-item label="客户电话" prop="customerPhone">
-          <el-input v-model="saleForm.customerPhone" placeholder="请输入客户电话" />
-        </el-form-item>
+      <el-form ref="saleFormRef" :model="saleForm" :rules="saleFormRules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="选择代理" prop="agentId">
+              <el-select v-model="saleForm.agentId" placeholder="请选择代理" filterable style="width: 100%;">
+                <el-option
+                  v-for="agent in salesStore.flatAgentsList"
+                  :key="agent._id"
+                  :label="agent.name"
+                  :value="agent._id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="销售日期" prop="saleDate">
+              <el-date-picker
+                v-model="saleForm.saleDate"
+                type="date"
+                placeholder="选择销售日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%;"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="客户姓名" prop="customerName">
+              <el-input v-model="saleForm.customerName" placeholder="请输入客户姓名" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="客户电话" prop="customerPhone">
+              <el-input v-model="saleForm.customerPhone" placeholder="请输入客户电话" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="客户地址" prop="customerAddress">
-          <el-input v-model="saleForm.customerAddress" type="textarea" placeholder="请输入客户地址" />
+          <el-input v-model="saleForm.customerAddress" placeholder="请输入客户地址" />
         </el-form-item>
-        <el-form-item label="产品信息" prop="products">
-          <div class="products-container">
-            <div v-for="(product, index) in saleForm.products" :key="index" class="product-row">
-              <el-input v-model="product.name" placeholder="产品名称" style="width: 200px; margin-right: 10px;" />
-              <el-input-number v-model="product.quantity" :min="1" placeholder="数量" style="width: 100px; margin-right: 10px;" />
-              <el-input-number v-model="product.price" :min="0" :precision="2" placeholder="单价" style="width: 120px; margin-right: 10px;" />
-              <el-button type="danger" size="small" @click="removeProduct(index)" v-if="saleForm.products?.length > 1">删除</el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addProduct">添加产品</el-button>
-          </div>
+
+        <el-divider>产品信息</el-divider>
+
+        <div v-for="(product, index) in saleForm.products" :key="index" class="product-row">
+          <el-row :gutter="10">
+            <el-col :span="8">
+              <el-form-item :label="`产品 ${index + 1}`" :prop="`products.${index}.name`" :rules="{ required: true, message: '请输入产品名称', trigger: 'blur' }">
+                <el-input v-model="product.name" placeholder="产品名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="5">
+              <el-form-item label-width="0" :prop="`products.${index}.quantity`" :rules="{ required: true, message: '请输入数量', trigger: 'blur' }">
+                <el-input-number v-model="product.quantity" :min="1" placeholder="数量" style="width: 100%;" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="5">
+              <el-form-item label-width="0" :prop="`products.${index}.price`" :rules="{ required: true, message: '请输入单价', trigger: 'blur' }">
+                <el-input-number v-model="product.price" :min="0" :precision="2" placeholder="单价" style="width: 100%;" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="4">
+              <el-button type="danger" @click="removeProduct(index)" plain>删除</el-button>
+            </el-col>
+          </el-row>
+        </div>
+        <el-form-item>
+          <el-button type="primary" @click="addProduct" plain>添加产品</el-button>
         </el-form-item>
-        <el-form-item label="支付方式" prop="paymentMethod">
-          <el-select v-model="saleForm.paymentMethod" placeholder="选择支付方式">
-            <el-option label="现金" value="cash" />
-            <el-option label="银行转账" value="bank_transfer" />
-            <el-option label="支付宝" value="alipay" />
-            <el-option label="微信支付" value="wechat" />
-            <el-option label="信用卡" value="credit_card" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="支付状态" prop="paymentStatus">
-          <el-select v-model="saleForm.paymentStatus" placeholder="选择支付状态">
-            <el-option label="已支付" value="paid" />
-            <el-option label="待支付" value="pending" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="销售日期" prop="saleDate">
-          <el-date-picker
-            v-model="saleForm.saleDate"
-            type="date"
-            placeholder="选择销售日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-        </el-form-item>
+
+        <el-divider>支付信息</el-divider>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="支付方式" prop="paymentMethod">
+              <el-select v-model="saleForm.paymentMethod" placeholder="请选择支付方式" style="width: 100%;">
+                <el-option label="现金" value="cash" />
+                <el-option label="银行转账" value="bank_transfer" />
+                <el-option label="支付宝" value="alipay" />
+                <el-option label="微信支付" value="wechat" />
+                <el-option label="信用卡" value="credit_card" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="支付状态" prop="paymentStatus">
+              <el-select v-model="saleForm.paymentStatus" placeholder="请选择支付状态" style="width: 100%;">
+                <el-option label="已支付" value="paid" />
+                <el-option label="待支付" value="pending" />
+                <el-option label="已取消" value="cancelled" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-form-item label="备注">
           <el-input v-model="saleForm.notes" type="textarea" placeholder="请输入备注信息" />
         </el-form-item>
@@ -443,7 +478,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showAddSaleDialog = false">取消</el-button>
-          <el-button type="primary" @click="submitSaleForm" :loading="submitting">确定</el-button>
+          <el-button type="primary" @click="submitSaleForm" :loading="submitting">{{ isEditMode ? '更新' : '确定' }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -549,6 +584,8 @@ const showViewDialog = ref(false)
 const currentViewRecord = ref({})
 const submitting = ref(false)
 const selectedRecords = ref([])
+const isEditMode = ref(false)
+const editingRecordId = ref(null)
 
 // 表单数据
 const saleForm = ref({
@@ -572,7 +609,6 @@ const saleFormRules = {
   customerPhone: [{ required: true, message: '请输入客户电话', trigger: 'blur' }],
   products: [{ required: true, message: '请添加产品信息', trigger: 'change' }],
   paymentMethod: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
-  paymentStatus: [{ required: true, message: '请选择支付状态', trigger: 'change' }],
   saleDate: [{ required: true, message: '请选择销售日期', trigger: 'change' }]
 }
 
@@ -588,13 +624,10 @@ const isLoading = computed(() => {
 })
 
 const salesStatsSummary = computed(() => salesStore.salesStatsSummary)
-const monthlySalesTrend = computed(() => salesStore.monthlySalesTrend)
-const paymentMethodDistribution = computed(() => salesStore.paymentMethodDistribution)
 
 const topAgents = computed(() => {
   return salesStore.salesStats?.salesByAgent?.slice(0, 5) || []
 })
-
 // 方法
 const getAgentLevelName = (level) => {
   const levelNames = {
@@ -609,7 +642,6 @@ const getLevelTagType = (level) => {
   const tagTypes = {
     1: 'danger',
     2: 'warning',
-    3: 'success'
   }
   return tagTypes[level] || 'info'
 }
@@ -627,16 +659,7 @@ const getPaymentMethodName = (method) => {
     wechat: '微信支付',
     credit_card: '信用卡'
   }
-  return methodNames[method] || method
-}
-
-const getPaymentStatusName = (status) => {
-  const statusNames = {
-    paid: '已支付',
-    pending: '待支付',
-    cancelled: '已取消'
-  }
-  return statusNames[status] || status
+  return methodNames[method] || '未知'
 }
 
 const getPaymentStatusType = (status) => {
@@ -648,11 +671,17 @@ const getPaymentStatusType = (status) => {
   return statusTypes[status] || 'info'
 }
 
+const getPaymentStatusName = (status) => {
+  const statusNames = {
+    paid: '已支付',
+    pending: '待支付',
+    cancelled: '已取消'
+  }
+  return statusNames[status] || '未知'
+}
+
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY'
-  }).format(amount || 0)
+  return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(amount || 0);
 }
 
 const handleDateRangeChange = (dates) => {
@@ -749,32 +778,39 @@ const calculateTotalAmount = () => {
 
 const submitSaleForm = async () => {
   if (!saleFormRef.value) return
-  
+
   try {
     await saleFormRef.value.validate()
-    
     submitting.value = true
-    
+
     const saleData = {
       ...saleForm.value,
       totalAmount: calculateTotalAmount()
     }
-    
-    await salesStore.createSaleRecord(saleData)
-    
-    ElMessage.success('销售记录添加成功')
+
+    if (isEditMode.value) {
+      await salesStore.updateSaleRecord(editingRecordId.value, saleData)
+      ElMessage.success('销售记录更新成功')
+    } else {
+      await salesStore.createSaleRecord(saleData)
+      ElMessage.success('销售记录添加成功')
+    }
+
     showAddSaleDialog.value = false
     resetSaleForm()
-    
+
   } catch (error) {
-    console.error('添加销售记录失败:', error)
-    ElMessage.error(error.message || '添加销售记录失败')
+    const action = isEditMode.value ? '更新' : '添加'
+    console.error(`${action}销售记录失败:`, error)
+    ElMessage.error(error.message || `${action}销售记录失败`)
   } finally {
     submitting.value = false
   }
 }
 
 const resetSaleForm = () => {
+  isEditMode.value = false
+  editingRecordId.value = null
   saleForm.value = {
     agentId: '',
     customerName: '',
@@ -802,8 +838,11 @@ const viewSaleRecord = (record) => {
 }
 
 const editSaleRecord = (record) => {
-  // TODO: 实现编辑功能
-  ElMessage.info('编辑功能开发中...')
+  isEditMode.value = true
+  editingRecordId.value = record._id
+  // 深拷贝以避免直接修改列表中的数据
+  saleForm.value = JSON.parse(JSON.stringify(record))
+  showAddSaleDialog.value = true
 }
 
 const deleteSaleRecord = async (record) => {
@@ -874,49 +913,6 @@ watch([currentPage, pageSize], async () => {
   font-weight: 600;
   color: #303133;
   margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-subtitle {
-  color: #909399;
-  margin: 0;
-  font-size: 14px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.filter-card {
-  margin-bottom: 20px;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-item label {
-  font-weight: 500;
-  color: #606266;
-  white-space: nowrap;
-}
-
-.filter-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
 }
 
 .stats-overview {
@@ -1003,31 +999,35 @@ watch([currentPage, pageSize], async () => {
 }
 
 .team-tree-container {
-  max-height: 400px;
+  max-height: 700px;
   overflow-y: auto;
+  padding: 8px 12px;
 }
 
 .tree-node {
   flex: 1;
   display: flex;
   align-items: center;
-  padding: 8px 0;
+  padding: 12px 0;
 }
 
 .node-info {
   display: flex;
   align-items: center;
   flex: 1;
+  gap: 12px;
 }
 
 .node-avatar {
   margin-right: 12px;
   background-color: #409eff;
   color: white;
+  flex-shrink: 0;
 }
 
 .node-details {
   flex: 1;
+  min-width: 0;
 }
 
 .node-title {
@@ -1035,11 +1035,14 @@ watch([currentPage, pageSize], async () => {
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 
 .node-name {
   font-weight: 500;
   color: #303133;
+  word-break: break-word;
 }
 
 .node-stats {
@@ -1047,12 +1050,15 @@ watch([currentPage, pageSize], async () => {
   gap: 12px;
   font-size: 12px;
   color: #909399;
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .ranking-list {

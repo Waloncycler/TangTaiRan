@@ -48,13 +48,13 @@ export const useAuthStore = defineStore('auth', () => {
       
       // 登录成功
       if (response && response.success) {
-        // 确保response.data存在
-        const userData = response.data || {}
+        // 兼容后端返回结构：优先使用 response.user，其次 response.data
+        const userData = response.user || response.data || {}
         
         isLoggedIn.value = true
         userInfo.value = {
-          username: username, // 使用登录时提供的用户名
-          role: userData.role || 'user', // 提供默认角色
+          username: userData.username || username,
+          role: userData.role || 'user',
           agentId: userData.agentId || null
         }
         
@@ -66,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
         // 设置API请求头的认证令牌
         api.setAuthToken(response.token)
         
-        ElMessage.success(`${username}登录成功`)
+        ElMessage.success(`${userInfo.value.username}登录成功`)
         return true
       } else {
         console.error('登录失败:', response?.message || '用户名或密码错误')
@@ -184,7 +184,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!isLoggedIn.value || !userInfo.value || !userInfo.value.role) return ''
     return roles.value[userInfo.value.role]?.name || userInfo.value.role || ''
   }
-  
+
   return {
     isLoggedIn,
     userInfo,

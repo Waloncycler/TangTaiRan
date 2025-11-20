@@ -13,7 +13,17 @@ export default defineConfig({
   server: {
     port: 8080,
     host: true,
-    open: true
+    open: true,
+    hmr: {
+      host: 'localhost',
+      protocol: 'ws',
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      }
+    }
   },
   build: {
     outDir: 'dist',

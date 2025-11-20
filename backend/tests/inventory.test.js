@@ -164,7 +164,7 @@ describe('库存管理 API', () => {
       expect(inventory.createdBy.toString()).toBe('507f1f77bcf86cd799439011');
 
       // 验证库存历史记录已创建
-      const history = await InventoryHistory.findOne({ inventory: inventory._id });
+      const history = await InventoryHistory.findOne({ inventoryId: inventory._id });
       expect(history).toBeTruthy();
       expect(history.type).toBe('initial');
       expect(history.quantity).toBe(inventoryData.quantity);
@@ -301,7 +301,7 @@ describe('库存管理 API', () => {
 
       // 验证库存历史记录已创建
       const history = await InventoryHistory.findOne({
-        inventory: inventory._id,
+        inventoryId: inventory._id,
         type: 'increase'
       });
       expect(history).toBeTruthy();
@@ -343,7 +343,7 @@ describe('库存管理 API', () => {
 
       // 验证库存历史记录已创建
       const history = await InventoryHistory.findOne({
-        inventory: inventory._id,
+        inventoryId: inventory._id,
         type: 'decrease'
       });
       expect(history).toBeTruthy();

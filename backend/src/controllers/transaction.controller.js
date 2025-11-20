@@ -102,8 +102,10 @@ exports.getAllTransactions = async (req, res, next) => {
     // 获取总记录数
     const total = await Transaction.countDocuments(filter);
 
-    // 直接返回数组格式，与前端期望一致
-    res.status(200).json(transactions);
+    res.status(200).json({
+      success: true,
+      data: transactions
+    });
   } catch (error) {
     next(error);
   }
@@ -509,8 +511,18 @@ const getBillingOverview = async (req, res, next) => {
     if (startDate) dateRange.start = startDate;
     if (endDate) dateRange.end = endDate;
     
-    // 获取销售收入统计
-    const salesIncome = await Transaction.getSalesIncomeByAgent(accessibleAgentIds, dateRange);
+    // 销售收入统计（按可访问代理与日期范围聚合）
+    const saleMatch = {};
+    if (Array.isArray(accessibleAgentIds) && accessibleAgentIds.length > 0) {
+      saleMatch.agentId = { $in: accessibleAgentIds };
+    }
+    if (dateRange.start || dateRange.end) {
+      saleMatch.saleDate = {};
+      if (dateRange.start) saleMatch.saleDate.$gte = new Date(dateRange.start);
+      if (dateRange.end) saleMatch.saleDate.$lte = new Date(dateRange.end);
+    }
+    const salesAgg = await Sale.calculateTotalSales(saleMatch);
+    const salesIncome = salesAgg.length > 0 ? salesAgg[0].totalAmount : 0;
     
     // 获取总收入和支出
     const dateQuery = {};

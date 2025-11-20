@@ -27,6 +27,16 @@ const inventorySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  costPrice: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  sellingPrice: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   location: {
     type: String,
     trim: true,
@@ -41,6 +51,11 @@ const inventorySchema = new mongoose.Schema({
     type: Number,
     min: 0,
     default: 10
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: ''
   }
 }, {
   timestamps: true
